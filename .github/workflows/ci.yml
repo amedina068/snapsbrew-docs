@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check-docs:
+    runs-on: ubuntu-latest
+    env:
+      # A token that can read the app repository. If it is empty, the job
+      # checks the front matter and the links only.
+      APP_TOKEN: ${{ secrets.SNAPSBREW_APP_TOKEN }}
+    steps:
+      - name: Check out the docs
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check out the app
+        if: env.APP_TOKEN != ''
+        uses: actions/checkout@v4
+        with:
+          repository: amedina068/socialcardsmain
+          token: ${{ secrets.SNAPSBREW_APP_TOKEN }}
+          path: .app
+
+      - name: Set up PHP
+        if: env.APP_TOKEN != ''
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: gd, intl, exif, bcmath
+          tools: composer:v2
+
+      - name: Install the PHP packages of the app
+        if: env.APP_TOKEN != ''
+        working-directory: .app
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Check the docs against the app
+        if: env.APP_TOKEN != ''
+        env:
+          SNAPSBREW_APP_PATH: ${{ github.workspace }}/.app
+        run: node scripts/check-docs.mjs
+
+      - name: Check the front matter and the links
+        if: env.APP_TOKEN == ''
+        run: node scripts/check-docs.mjs --links-only
