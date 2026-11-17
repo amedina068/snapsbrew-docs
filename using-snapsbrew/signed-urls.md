@@ -154,9 +154,7 @@ The app makes a cache key from the path, the query string and the published vers
 - A change to any parameter makes a new URL and a new render.
 - A publish of the template changes the cache key. The next request renders the new version.
 
-The app finds a cached image before it checks the signature. A cached URL keeps working after you revoke its key.
-
-TODO(owner): The middleware returns a cached image before it checks the signature, so a revoked key does not stop a URL that already rendered. Is this intended?
+The app finds a cached image before it checks the signature. The cache key includes the signature, so only a URL that a valid key signed can have a cached image. A cached URL keeps working after you revoke its key.
 
 ## Errors
 
@@ -179,7 +177,9 @@ The endpoint returns `400` when:
 1. Open **Account > Developers**.
 2. In **Signed URL API keys**, click **Revoke** next to the key.
 
-A URL that the app did not render yet stops working. The status of the key changes to **Revoked**.
+The key cannot render a new image. A URL that the app did not render yet gets the placeholder image. A URL that the app already rendered keeps its image. The status of the key changes to **Revoked**.
+
+To stop the images that a revoked key rendered, publish the template again. A publish changes the cache key, so the next request needs a valid key.
 
 ## Related pages
 
