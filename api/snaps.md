@@ -113,7 +113,7 @@ A request with `collection_id` returns a list of snap objects, one for each temp
 | `is_async` | boolean | `true` when the render ran on the queue. |
 | `webhook_url` | string or null | The webhook address. |
 | `completed_at` | datetime or null | The time when the render finished. |
-| `last_error` | string or null | The cause of a failure. |
+| `last_error` | string or null | A fixed code for a failure: `render_failed`, or a webhook code (`webhook_redirect_refused`, `webhook_unreachable`, `webhook_http_<status>`). It never holds the message of the renderer. The log of the instance keeps that message. |
 | `variants` | array or null | The variants that the render used. |
 | `template_id` | string or null | The UUID of the template. It is `null` for a snap from an inline MCP design. |
 | `template_title` | string or null | The title of the template. |

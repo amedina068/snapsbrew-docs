@@ -67,7 +67,9 @@ The app sends an email with a link to `/register?invitation=<token>`. The invita
 
 The invitation email needs a working mailer. If `MAIL_MAILER` is `log`, the email and its link go to the log. Read [Configuration](configuration.md).
 
-New users also see an onboarding page. It can send up to 25 invitations at one time.
+New users also see an onboarding page. It can send up to 25 invitations at one time. The onboarding steps close when the user finishes onboarding.
+
+One company can send 20 invitation emails in 24 hours, from the account page and the onboarding page together. `SNAPSBREW_INVITATIONS_PER_COMPANY_PER_DAY` changes this number.
 
 ## The admin area
 

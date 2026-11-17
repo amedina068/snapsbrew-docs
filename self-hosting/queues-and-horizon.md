@@ -66,9 +66,9 @@ TODO(owner): Do you want a supported way to change the Horizon process count wit
 
 The dashboard is at `/horizon`. `HORIZON_PATH` changes the path, and `HORIZON_DOMAIN` moves it to another domain.
 
-When `APP_ENV` is not `local`, only the owner of the instance can open the dashboard. When `APP_ENV` is `local`, Horizon lets every visitor open it.
+Only the owner of the instance can open the dashboard, in every environment. Every other visitor gets `403`.
 
-CAUTION: Set `APP_ENV=production` on a server. With `APP_ENV=local`, every visitor can open `/horizon`.
+CAUTION: Set `APP_ENV=production` on a server. Horizon starts workers only for `production` and `local`.
 
 ## Failed jobs
 

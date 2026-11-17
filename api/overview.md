@@ -226,7 +226,7 @@ TODO(owner): Do you want to sign webhook requests, so that a receiver can prove 
 
 ## Public addresses for images
 
-An `image_url` in `variants` must also be a public `http` or `https` address. The host of `APP_URL` is always accepted. The same rule applies to the `url` of a screenshot.
+An `image_url` in `variants` must also be a public `http` or `https` address. The scheme, host and port of `APP_URL` are always accepted. Another port on the host of `APP_URL` gets the same check as any other host. The same rule applies to the `url` of a screenshot.
 
 ## Code examples
 

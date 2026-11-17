@@ -20,7 +20,7 @@ An instance without a marketing site does not need these endpoints. They are off
 For each endpoint:
 
 - **Auth:** none
-- **Rate limit:** `api` (60 a minute for each IP address)
+- **Rate limit:** `free-tools`: 5 requests each minute and 50 each day for one IP address, for all four tools together. The `api` limit (60 a minute) also applies.
 - **Usage log:** no
 
 The in-app API reference (`ApiSpec`) does not document these endpoints. The OpenAPI file and the Postman collection do not have them.
@@ -31,19 +31,19 @@ The endpoints return `404` until you turn them on.
 
 1. Set `SNAPSBREW_FREE_TOOLS_ENABLED=true` in `.env`.
 2. Set `SNAPSBREW_FREE_TOOLS_USER_ID` to the ID of an existing user. The screenshot tool stores its screenshots under this user. The default is `1`.
-3. If you cache the configuration, run `php artisan config:cache` again.
+3. Set the UUID of the template of each template tool: `SNAPSBREW_FREE_TOOLS_CERTIFICATE_TEMPLATE`, `SNAPSBREW_FREE_TOOLS_TESTIMONIAL_TEMPLATE` and `SNAPSBREW_FREE_TOOLS_TWITTER_GRAPH_TEMPLATE`. A tool without a template returns `503`.
+4. If you cache the configuration, run `php artisan config:cache` again.
 
 See [Configuration](../self-hosting/configuration.md).
 
 ## Security notes
 
-- The three template tools accept the UUID of any template on the instance. They do not check the company. Anyone who knows a template UUID can render it.
+- Each template tool renders only the template that its variable names. The request cannot choose a template. The tools ignore a `template_uuid` field.
+- Each template tool changes only the layers in its field table. The tools ignore other fields.
 - The screenshot tool opens any public URL in the headless Chrome of the instance.
-- The endpoints need no token, so anyone can call them.
+- The endpoints need no token, so anyone can call them. The `free-tools` limit applies to each IP address.
 
 Turn the tools on only if a marketing site needs them.
-
-TODO(owner): Do you want the template tools to accept only an allow-list of template UUIDs?
 
 ## Certificate creator
 
@@ -53,11 +53,10 @@ POST /v1/tools/certificate-creator
 
 | Field | Type | Description |
 |---|---|---|
-| `template_uuid` | string | The UUID of an existing template. |
-| `awardee` | string | Text for the layer `awardee`. |
-| `awarder` | string | Text for the layer `awarder`. |
-| `date` | string | Text for the layer `date`. |
-| `description` | string | Text for the layer `description`. |
+| `awardee` | string | Text for the layer `awardee`. 200 characters or fewer. |
+| `awarder` | string | Text for the layer `awarder`. 200 characters or fewer. |
+| `date` | string | Text for the layer `date`. 100 characters or fewer. |
+| `description` | string | Text for the layer `description`. 1000 characters or fewer. |
 
 The instance renders a **PDF** and returns its URL. The instance removes the snap one day later.
 
@@ -73,10 +72,9 @@ Send `multipart/form-data`.
 
 | Field | Type | Description |
 |---|---|---|
-| `template_uuid` | string | The UUID of an existing template. |
-| `title` | string | Text for the layer `title`. |
-| `website` | string | Text for the layer `website`. |
-| `image` | file | An image for the layer `image`. |
+| `title` | string | Text for the layer `title`. 200 characters or fewer. |
+| `website` | string | Text for the layer `website`. 200 characters or fewer. |
+| `image` | file | An image for the layer `image`: JPEG, PNG, GIF, WebP or BMP, 2 MB or less. |
 
 The instance stores the uploaded image in the media library of the first user of the instance. When `APP_ENV` is `production`, the instance removes the snap and the image one day later.
 
@@ -88,9 +86,8 @@ POST /v1/tools/testimonial-image-creator
 
 | Field | Type | Description |
 |---|---|---|
-| `template_uuid` | string | The UUID of an existing template. |
-| `author` | string | Text for the layer `author`. |
-| `testimonial` | string | Text for the layer `testimonial`. |
+| `author` | string | Text for the layer `author`. 200 characters or fewer. |
+| `testimonial` | string | Text for the layer `testimonial`. 1000 characters or fewer. |
 
 When `APP_ENV` is `production`, the instance removes the snap one day later.
 
@@ -126,9 +123,10 @@ Each tool returns `200` with the URL of the file:
 
 | Status | Cause |
 |---|---|
-| `404` | The free tools are off, or the template does not exist. |
+| `404` | The free tools are off. |
 | `422` | A field failed a rule. |
-| `503` | The screenshot user does not exist. |
+| `429` | The IP address sent too many requests. |
+| `503` | The template of the tool is not set or does not exist, or the screenshot user does not exist. |
 
 ## Examples
 
@@ -136,7 +134,7 @@ Each tool returns `200` with the URL of the file:
 curl -X POST https://snapsbrew.example/api/v1/tools/testimonial-image-creator \
   -H 'Accept: application/json' \
   -H 'Content-Type: application/json' \
-  -d '{"template_uuid":"<uuid>","author":"Ada Lovelace","testimonial":"It renders each card in seconds."}'
+  -d '{"author":"Ada Lovelace","testimonial":"It renders each card in seconds."}'
 ```
 
 ```php

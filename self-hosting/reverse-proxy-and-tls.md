@@ -6,21 +6,62 @@ order: 2
 
 # Reverse proxy and TLS
 
-Snapsbrew does not terminate TLS itself. The `web` container answers plain HTTP on port 8080. To serve HTTPS, put a reverse proxy in front of the app.
+Snapsbrew does not terminate TLS itself. The `web` container answers plain HTTP on port 8080. Docker publishes this port on `127.0.0.1` of the host only. To serve HTTPS, put a reverse proxy on the host in front of the app.
 
 ## What the app needs from the proxy
 
 1. Set `APP_URL` to the public HTTPS URL, for example `https://snapsbrew.example`.
-2. Set `TRUSTED_PROXIES=*` in `.env`.
-3. Make sure that the proxy sends the `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Port` and `X-Forwarded-Proto` headers.
-4. If the proxy limits the size of a request body, allow at least 10 MB. A spreadsheet import accepts files up to 10 MB.
-5. Restart the app.
+2. Set `TRUSTED_PROXIES` in `.env` to the address of each proxy that sends requests to the app. Read [Trusted proxies](#trusted-proxies).
+3. Make sure that the proxy sends the original `Host` header. Read [The hosts that the app answers](#the-hosts-that-the-app-answers).
+4. Make sure that the proxy sends the `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Port` and `X-Forwarded-Proto` headers.
+5. If the proxy limits the size of a request body, allow at least 10 MB. A spreadsheet import accepts files up to 10 MB.
+6. Restart the app.
 
 Without `TRUSTED_PROXIES`, the app does not trust the forwarded headers. Then it can build `http://` links and wrong signed URLs.
 
 The app reads these forwarded headers: `X-Forwarded-For`, `X-Forwarded-Host`, `X-Forwarded-Port`, `X-Forwarded-Proto` and the AWS ELB headers.
 
-The value `*` trusts every client that connects to the app. Use it only when the proxy is the only client that can reach the app port. To trust only one proxy, set its IP address instead.
+## Trusted proxies
+
+`TRUSTED_PROXIES` is a comma-separated list of IP addresses and CIDR ranges. The app reads the `X-Forwarded-*` headers only from a request that comes from one of them. Then it takes the client IP from `X-Forwarded-For`.
+
+The limits for each IP use this client IP. Examples are the login limit, the embedded form limits, the signed URL limit and the free tools limit.
+
+WARNING: Do not set `TRUSTED_PROXIES=*`. With `*`, the app trusts the `X-Forwarded-For` header of every client. A client can then choose its own IP and pass every limit for one IP.
+
+Give the address of each proxy in front of the app:
+
+- **A proxy on the same host as Docker.** A request from the host reaches the app from the gateway address of the Docker network. Find it with `docker network inspect <project>_default --format '{{(index .IPAM.Config 0).Gateway}}'`. Do not trust the whole Docker range, because Browserless and the other containers are in it.
+- **A proxy on another server.** Use the private address of that server.
+- **Cloudflare.** Also add the Cloudflare ranges. Copy the current list from [cloudflare.com/ips](https://www.cloudflare.com/ips/). Make sure that your proxy adds the address of Cloudflare to `X-Forwarded-For`.
+
+This example trusts a proxy on the Docker gateway `172.18.0.1` and the Cloudflare ranges:
+
+```dotenv
+TRUSTED_PROXIES=172.18.0.1,173.245.48.0/20,103.21.244.0/22,103.22.200.0/22,103.31.4.0/22,141.101.64.0/18,108.162.192.0/18,190.93.240.0/20,188.114.96.0/20,197.234.240.0/22,198.41.128.0/17,162.158.0.0/15,104.16.0.0/13,104.24.0.0/14,172.64.0.0/13,131.0.72.0/22,2400:cb00::/32,2606:4700::/32,2803:f800::/32,2405:b500::/32,2405:8100::/32,2a06:98c0::/29,2c0f:f248::/32
+```
+
+The app also limits the login attempts for one email from all IPs together. A wrong proxy setting then cannot open the login to an unlimited number of attempts. The other limits for one IP have no such second limit.
+
+## The hosts that the app answers
+
+The app answers `400` to a request for a host that is not one of these:
+
+- the host of `APP_URL`
+- a host in `APP_PREVIOUS_URLS`
+- `localhost`, `127.0.0.1` or `[::1]`, for the health check of the container
+
+The app builds every link from `APP_URL`, never from the host of the request.
+
+The proxy must send the host that the visitor asked for. Caddy and Traefik send the original `Host` header by default. With NGINX, set `proxy_set_header Host $host;`.
+
+The app reads `X-Forwarded-Host` only from a trusted proxy. When it reads that header, the value must also be one of the hosts above.
+
+If every page returns `400` behind a proxy, read [Troubleshooting](troubleshooting.md#every-page-returns-400-behind-a-proxy).
+
+## Expose the app port
+
+The Compose files publish the app port on `127.0.0.1`. Only a client on the host, for example the proxy, can reach it. To take traffic from other hosts with no proxy, set `APP_BIND=0.0.0.0` in `.env`. Then any client that can reach the port can skip the proxy.
 
 ## Example: Caddy
 
@@ -80,4 +121,4 @@ Browserless loads the images and the fonts of a template from their URLs. When t
 
 ## Session cookies over HTTPS
 
-To send the session cookie only over HTTPS, set `SESSION_SECURE_COOKIE=true`.
+When `APP_URL` starts with `https://`, the app sends the session cookie only over HTTPS. `SESSION_SECURE_COOKIE` changes this. Set it to `false` only when the browser reaches an `https` `APP_URL` over plain HTTP.
