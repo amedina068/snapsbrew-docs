@@ -110,7 +110,7 @@ Each render writes a row in the usage log of the form owner. A template form wri
 
 An uploaded image goes into the media library of the form owner.
 
-The submit route has no rate limit.
+The submit route allows 10 requests a minute for one IP address and 60 a minute for one form. A request over a limit gets `429` and renders nothing. Read [Embedded forms](../api/embedded-forms.md#submit-an-embedded-form).
 
 ## Forms after a host change
 

@@ -58,8 +58,13 @@ The code of the app is in a separate repository. The docs describe that code, an
 - [Preview](api/preview.md)
 - [Tags](api/tags.md)
 - [Embedded forms](api/embedded-forms.md)
+- [Signed URLs](api/signed-urls.md)
 - [Free tools](api/free-tools.md)
 - [OpenAPI and Postman](api/openapi.md)
+
+### SDKs
+
+- [SDKs](sdks/overview.md)
 
 ### MCP server
 
@@ -122,7 +127,7 @@ To check the front matter and the links only:
 node scripts/check-docs.mjs
 ```
 
-To also check the artisan commands and the environment variables against the app, give the path of an app checkout:
+To also check the artisan commands, the environment variables and the API endpoints against the app, give the path of an app checkout:
 
 ```bash
 SNAPSBREW_APP_PATH=../snapsbrew node scripts/check-docs.mjs
@@ -132,7 +137,15 @@ The script then makes sure that:
 
 - each `php artisan <command>` in a page exists in the app,
 - each environment variable in the code of a page exists in `.env.example`, `.env.docker.example`, `config/`, the Docker files or `deploy/` of the app,
+- each `METHOD /path` on an API page (`api/*.md`) exists in `docs/api/openapi.yaml` of the app,
+- each operation of `docs/api/openapi.yaml` is on an API page,
 - each internal link and each anchor resolves.
+
+The endpoint check reads a `METHOD /path` line in a fenced `http` block, inline code such as `` `POST /v1/snaps` ``, and a table row with the method and the path in two code cells. It compares the paths with the parameter names removed, so `{templateUuid}` and `{templateIdentifier}` are equal.
+
+Two lists at the top of `scripts/check-docs.mjs` give the exceptions, each with a reason. The first list holds the paths that a page documents but the OpenAPI file leaves out on purpose, for example the free tools under `/v1/tools/`. The second list holds the operations that no page documents on purpose. The second list is empty now.
+
+If the app checkout has no `docs/api/openapi.yaml`, the script writes a warning and skips the endpoint check. An older app checkout does not have this file.
 
 If the app checkout has a `vendor/` folder, the script reads the command list from `php artisan list`. If not, it reads the command signatures in `app/Console/Commands`.
 

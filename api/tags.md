@@ -21,6 +21,14 @@ For each endpoint:
 - **Rate limit:** `api` (60 a minute)
 - **Usage log:** yes
 
+### Errors for each endpoint
+
+| Status | Cause |
+|---|---|
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. |
+
 ## List tags
 
 ```http
@@ -32,6 +40,14 @@ Returns up to 15 tags, in name order.
 | Parameter | In | Required | Description |
 |---|---|---|---|
 | `search` | query | No | Returns only the tags with this text in the name. |
+
+```bash
+curl 'https://snapsbrew.example/api/v1/tags?search=launch' \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the tags:
 
 ```json
 {
@@ -61,7 +77,16 @@ The instance makes the slug from the name. If the slug exists in your company, t
 }
 ```
 
-`422` means that `name` is missing or too long.
+`422` means that `name` is missing or too long:
+
+```json
+{
+  "message": "The name field is required.",
+  "errors": {"name": ["The name field is required."]}
+}
+```
+
+The request example is in [Examples](#examples).
 
 ## Sync template tags
 
@@ -89,8 +114,10 @@ Replaces all tags of a template with the tags that you send. To remove all tags,
 
 | Status | Cause |
 |---|---|
-| `404` | The template is not in your company. |
-| `422` | A tag ID does not exist in your company. |
+| `404` | The template is not in your company. The body is `{"message": "No query results for model [App\\Models\\Template]."}`. |
+| `422` | A tag ID does not exist in your company. The message is under `errors.tag_ids.0`, with the index of the wrong ID. |
+
+The request example is in [Examples](#examples).
 
 ## Examples
 

@@ -5,12 +5,21 @@
 // 2. Each internal link resolves to a page, and each anchor to a heading.
 // 3. Each `php artisan <command>` in a page exists in the app.
 // 4. Each environment variable in the code of a page exists in the app.
+// 5. Each endpoint on an API page (`api/*.md`) exists in the OpenAPI file of
+//    the app, and each operation of that file is on an API page.
 //
-// Checks 3 and 4 need the source of the app. Set SNAPSBREW_APP_PATH to the
+// Checks 3, 4 and 5 need the source of the app. Set SNAPSBREW_APP_PATH to the
 // app folder. If SNAPSBREW_APP_PATH is not set, the script runs checks 1 and 2
 // only. If the app folder has `vendor/`, the script reads the commands from
 // `php artisan list`. If not, it reads the signatures in
 // `app/Console/Commands` and a fixed list of framework commands.
+//
+// Check 5 reads `docs/api/openapi.yaml` of the app. An older app checkout
+// does not have this file. Then the script writes a warning and skips check 5.
+// The check reads an endpoint from two places on an API page:
+// - a line `METHOD /path` in a fenced `http` block,
+// - inline code `METHOD /path`, or a table row with `METHOD` and `/path` in
+//   two inline code cells.
 //
 // Usage: node scripts/check-docs.mjs [--links-only]
 // No dependencies. Node 20 or later.
@@ -35,7 +44,21 @@ const EXTERNAL_ENV = new Map([
   ['PUPPETEER_EXECUTABLE_PATH', 'read by Puppeteer, not by the app'],
   ['SNAPSBREW_APP_PATH', 'read by the scripts of this repository'],
   ['SNAPSBREW_APP_TOKEN', 'a secret of the CI of this repository'],
+  ['SNAPSBREW_SIGNING_KEY', 'read by the SDKs, not by the app'],
+  ['SNAPSBREW_TOKEN', 'read by the SDKs, not by the app'],
+  ['SNAPSBREW_URL', 'read by the SDKs, not by the app'],
+  ['YOUR_API_TOKEN', 'the token placeholder of the Postman files, not a variable'],
 ]);
+
+// Endpoints that an API page documents, but that the OpenAPI file leaves out
+// on purpose. Each entry is a path prefix and the reason.
+const OUTSIDE_SPEC = new Map([
+  ['/v1/tools/', 'the free tools are not in ApiSpec on purpose. See api/free-tools.md'],
+]);
+
+// Operations of the OpenAPI file that no API page documents on purpose.
+// Each entry is `METHOD /path`, exactly as the file writes it, and the reason.
+const NOT_ON_A_PAGE = new Map([]);
 
 // Framework commands that the fallback mode accepts when `vendor/` is missing.
 const FRAMEWORK_COMMANDS = [
@@ -226,7 +249,116 @@ if (appPath) {
     }
   }
 } else {
-  warnings.push('SNAPSBREW_APP_PATH is not set. The command and environment variable checks did not run.');
+  warnings.push('SNAPSBREW_APP_PATH is not set. The command, environment variable and endpoint checks did not run.');
+}
+
+// ---------------------------------------------------------------------------
+// Check 5: API endpoints against the OpenAPI file of the app
+// ---------------------------------------------------------------------------
+
+const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+let endpointCount = 0;
+let specOperationCount = 0;
+
+if (appPath) {
+  const specFile = join(appPath, 'docs', 'api', 'openapi.yaml');
+  if (!existsSync(specFile)) {
+    warnings.push(`The app has no ${relative(appPath, specFile)}, so the endpoint check did not run.`);
+  } else {
+    const spec = loadSpecOperations(specFile);
+    specOperationCount = spec.size;
+    const documented = new Set();
+
+    for (const [file, text] of sources) {
+      if (!relative(root, file).startsWith(`api${'/'}`)) continue;
+      for (const { number, method, path } of pageEndpoints(text)) {
+        endpointCount++;
+        const key = `${method} ${normalizePath(path)}`;
+        documented.add(key);
+        if (spec.has(key)) continue;
+        if ([...OUTSIDE_SPEC.keys()].some((prefix) => path.startsWith(prefix))) continue;
+        fail(file, number, `endpoint is not in the OpenAPI file of the app: ${method} ${path}`);
+      }
+    }
+
+    for (const [key, original] of spec) {
+      if (documented.has(key) || NOT_ON_A_PAGE.has(original)) continue;
+      errors.push(`api/: no API page documents the operation ${original} of the OpenAPI file`);
+    }
+    for (const original of NOT_ON_A_PAGE.keys()) {
+      if (![...spec.values()].includes(original)) {
+        errors.push(`scripts/check-docs.mjs: NOT_ON_A_PAGE names ${original}, which is not in the OpenAPI file`);
+      }
+    }
+  }
+}
+
+/** Replaces each path parameter ({id}, :id, <id>) with {} and removes the query string. */
+function normalizePath(path) {
+  return path
+    .split('?')[0]
+    .replace(/\/+$/, '')
+    .split('/')
+    .map((segment) => (/^(\{[^}]*\}|:[A-Za-z_]\w*|<[^>]*>)$/.test(segment) ? '{}' : segment))
+    .join('/');
+}
+
+/**
+ * Reads the operations of an OpenAPI file with no YAML library. Under the
+ * top-level `paths:` key, a path is indented two spaces and an HTTP method
+ * four spaces. Returns a map of the normalized `METHOD /path` to the original.
+ */
+function loadSpecOperations(file) {
+  const operations = new Map();
+  let inPaths = false;
+  let path = null;
+  for (const line of readFileSync(file, 'utf8').split('\n')) {
+    if (/^\S/.test(line)) {
+      inPaths = /^paths:\s*$/.test(line);
+      path = null;
+      continue;
+    }
+    if (!inPaths) continue;
+    const pathMatch = line.match(/^ {2}(['"]?)(\/[^'"]*)\1:\s*$/);
+    if (pathMatch) {
+      path = pathMatch[2];
+      continue;
+    }
+    const methodMatch = line.match(/^ {4}(get|post|put|patch|delete):\s*$/);
+    if (methodMatch && path) {
+      const method = methodMatch[1].toUpperCase();
+      operations.set(`${method} ${normalizePath(path)}`, `${method} ${path}`);
+    }
+  }
+  return operations;
+}
+
+/** The `METHOD /path` claims of one page, with their line numbers. */
+function pageEndpoints(text) {
+  const found = [];
+  const methods = HTTP_METHODS.join('|');
+  let fence = null;
+  for (const [index, line] of text.split('\n').entries()) {
+    const number = index + 1;
+    const fenceMatch = line.match(/^\s*(`{3,}|~{3,})\s*(\S*)/);
+    if (fenceMatch) {
+      if (fence === null) fence = { marker: fenceMatch[1], language: fenceMatch[2] };
+      else if (fenceMatch[1][0] === fence.marker[0] && fenceMatch[1].length >= fence.marker.length) fence = null;
+      continue;
+    }
+    if (fence !== null) {
+      const match = fence.language === 'http' && line.match(new RegExp(`^(${methods})\\s+(\\/\\S*)\\s*$`));
+      if (match) found.push({ number, method: match[1], path: match[2] });
+      continue;
+    }
+    for (const match of line.matchAll(new RegExp(`\`(${methods}) (\\/[^\`\\s]*)\``, 'g'))) {
+      found.push({ number, method: match[1], path: match[2] });
+    }
+    for (const match of line.matchAll(new RegExp(`\`(${methods})\`\\s*\\|\\s*\`(\\/[^\`\\s]*)\``, 'g'))) {
+      found.push({ number, method: match[1], path: match[2] });
+    }
+  }
+  return found;
 }
 
 function loadCommands(app) {
@@ -322,7 +454,10 @@ for (const error of errors) console.error(error);
 
 console.log(
   `Checked ${files.length} files: ${linkCount} internal links, ` +
-    (appPath ? `${commandCount} artisan commands, ${envCount} environment variables.` : 'commands and variables skipped.'),
+    (appPath
+      ? `${commandCount} artisan commands, ${envCount} environment variables, ` +
+        `${endpointCount} API endpoints against ${specOperationCount} OpenAPI operations.`
+      : 'commands, variables and endpoints skipped.'),
 );
 
 if (errors.length > 0) {

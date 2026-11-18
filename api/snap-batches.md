@@ -23,6 +23,14 @@ For each endpoint:
 
 Each response carries an `X-Request-Uuid` header. The bodies have no `data` key.
 
+### Errors for each endpoint
+
+| Status | Cause |
+|---|---|
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. |
+
 The queue worker must run. See [Queues and Horizon](../self-hosting/queues-and-horizon.md).
 
 ## Batch status
@@ -82,8 +90,11 @@ More than 100 items returns `422` and creates nothing. The instance never cuts t
 | Status | Cause | Body |
 |---|---|---|
 | `202` | The batch is on the queue. A replay of the same `idempotency_key` also returns `202` with `X-Idempotent-Replay: true`. | The batch object. |
-| `409` | The key is in progress on another request, or a single snap already used the key. | `{"message": "This idempotency_key already belongs to a single snap. Use a new key for a batch."}` |
-| `422` | A field failed a rule. | `{"message": "A batch accepts at most 100 items. Split the request into smaller batches.", "errors": {...}}` |
+| `409` | The key is in progress on another request (`idempotency_key_in_progress`), or a single snap already used the key (`idempotency_key_belongs_to_snap`). Nothing was created. | `{"message": "This idempotency_key already belongs to a single snap. Use a new key for a batch.", "code": "idempotency_key_belongs_to_snap"}` |
+| `422` | A field failed a rule. A `template_id` that is not in your company also returns `422`, with the message under `errors.template_id`. | `{"message": "A batch accepts at most 100 items. Split the request into smaller batches.", "errors": {"items": ["..."]}}` |
+| `500` | An unexpected error stopped the request. The body gives no detail of the cause. | `{"message": "...", "code": "internal_error"}` |
+
+The request example is in [Examples](#examples).
 
 ## Read a batch
 
@@ -107,16 +118,18 @@ Returns the counts and each item. Read the batch every 5 seconds or so. Stop whe
   "status_url": "https://snapsbrew.example/api/v1/snaps/batches/7c1f2a9e-0b44-4a1e-9f2b-5d3c8e1a7b60",
   "items": [
     {"id": "9f1c2d3e", "identifier": "row-1", "status": "completed", "media_url": "https://snapsbrew.example/storage/snaps/9f1c2d3e.png", "last_error": null},
-    {"id": "4b8a7c6d", "identifier": "row-2", "status": "failed", "media_url": null, "last_error": "Render failed."}
+    {"id": "4b8a7c6d", "identifier": "row-2", "status": "failed", "media_url": null, "last_error": "render_failed"}
   ]
 }
 ```
 
 - `media_url` has a value only on an item with status `completed`.
-- `last_error` is the error text from the renderer. Show it to a person. Do not branch on it.
+- `last_error` is a fixed code, the same as `last_error` of a [snap](snaps.md#the-snap-object). It never holds the message of the renderer.
 - A batch of another company returns `404`, the same as a batch that does not exist.
 
 `404` returns `{"message": "No batch with that id exists in your account."}`.
+
+The request example is in [Examples](#examples).
 
 ## Cancel a batch
 
@@ -133,6 +146,30 @@ Stops a batch that runs:
 You cannot undo a cancel or continue a canceled batch. Start a new batch for the items that you still want.
 
 `200` returns the batch with its items, in the same shape as the read. A batch that is already terminal comes back with no change, so a second cancel is safe.
+
+```json
+{
+  "uuid": "7c1f2a9e-0b44-4a1e-9f2b-5d3c8e1a7b60",
+  "title": "October launch",
+  "status": "canceled",
+  "total_rows": 3,
+  "processed_rows": 3,
+  "completed": 1,
+  "pending": 0,
+  "failed": 0,
+  "canceled": 2,
+  "status_url": "https://snapsbrew.example/api/v1/snaps/batches/7c1f2a9e-0b44-4a1e-9f2b-5d3c8e1a7b60",
+  "items": [
+    {"id": "9f1c2d3e", "identifier": "row-1", "status": "completed", "media_url": "https://snapsbrew.example/storage/snaps/9f1c2d3e.png", "last_error": null},
+    {"id": "4b8a7c6d", "identifier": "row-2", "status": "canceled", "media_url": null, "last_error": null},
+    {"id": "2e5f9a1b", "identifier": "row-3", "status": "canceled", "media_url": null, "last_error": null}
+  ]
+}
+```
+
+`404` returns the same body as the read.
+
+The request example is in [Examples](#examples).
 
 ## Webhook
 

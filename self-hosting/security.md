@@ -53,8 +53,10 @@ A deactivated user cannot use any of these credentials. Read [Accounts and regis
 | `preview` | 10 a minute, for each user or IP address | `GET /v1/templates/{uuid}/preview` and `GET /v1/snaps/preview`. |
 | `mcp` | 30 a minute, for each user or IP address | `/mcp`. |
 | `editor-document` | 30 a minute for each user, 180 a minute for each company | The editor document routes of the API. |
+| `embedded-form-submit` | 10 a minute for each IP address, 60 a minute for each form | The submit route of an embedded form. |
+| `signed-url` | 600 a minute for each IP address | `/signed-url/image.jpg`. |
 
-The submit route of an embedded form has no rate limit. Read [API overview](../api/overview.md) for the limits of each route.
+`SNAPSBREW_EMBEDDED_FORM_SUBMITS_PER_IP`, `SNAPSBREW_EMBEDDED_FORM_SUBMITS_PER_FORM` and `SNAPSBREW_SIGNED_URL_REQUESTS_PER_IP` change the last two limits. Read [API overview](../api/overview.md#rate-limits) for the limits of each route.
 
 ## URLs that the renderer loads
 

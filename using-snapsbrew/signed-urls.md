@@ -183,6 +183,7 @@ To stop the images that a revoked key rendered, publish the template again. A pu
 
 ## Related pages
 
+- [Signed URLs API reference](../api/signed-urls.md)
 - [Layers and variants](layers-and-variants.md)
 - [Embedded forms](embedded-forms.md)
 - [Snaps](snaps.md)

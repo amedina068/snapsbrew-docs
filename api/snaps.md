@@ -85,6 +85,8 @@ For the full catalog, call [`GET /v1/guides/variant-properties`](guides.md#list-
 {
   "id": "9f1c2d3e",
   "media_url": "https://snapsbrew.example/storage/snaps/9f1c2d3e.png",
+  "width": 1200,
+  "height": 630,
   "type": "image",
   "status": "completed",
   "is_async": false,
@@ -108,6 +110,8 @@ A request with `collection_id` returns a list of snap objects, one for each temp
 |---|---|---|
 | `id` | string | The UUID of the snap. |
 | `media_url` | string or null | The URL of the file. It is `null` until the render completes. |
+| `width` | integer or null | The width in pixels of the template version that the snap rendered. |
+| `height` | integer or null | The height in pixels of the template version that the snap rendered. |
 | `type` | string | `image` or `pdf`. |
 | `status` | string | `pending`, `processing`, `completed`, `failed` or `canceled`. |
 | `is_async` | boolean | `true` when the render ran on the queue. |
@@ -130,10 +134,29 @@ A request with `collection_id` returns a list of snap objects, one for each temp
 
 | Status | Cause | Body |
 |---|---|---|
+| `401` | The token is missing or wrong. | `{"message": "Unauthenticated."}` |
+| `403` | The token has no `api_requests` ability, or a permission check refused the request. | `{"message": "This action is unauthorized."}` |
 | `404` | The collection has no templates. | `{"message": "The collection doesn't have any templates."}` |
-| `409` | Another request with the same `idempotency_key` is in progress. Nothing was created. | `{"message": "A request with this idempotency_key is already in progress. ..."}` |
-| `422` | A field failed a rule. A template or a collection that is not in your company also returns `422`. | `{"message": "...", "errors": {...}}` |
-| `500` | The render failed. | `{"message": "..."}` |
+| `409` | Another request with the same `idempotency_key` is in progress, or a batch owns the key. Nothing was created. | `{"message": "...", "code": "idempotency_key_in_progress"}` |
+| `422` | A field failed a rule. A template or a collection that is not in your company also returns `422`, not `404`. | `{"message": "...", "errors": {...}}` |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. | `{"message": "Too Many Attempts."}` |
+| `500` | An unexpected error stopped the request. | `{"message": "...", "code": "internal_error"}` |
+
+A `409` carries a `code`:
+
+- `idempotency_key_in_progress`: another request holds the key. Send the request again with the same key after a short wait.
+- `idempotency_key_belongs_to_batch`: a batch owns the key. Send a new key.
+
+A `422` for a template that is not in your company has its message under `errors.template_id`:
+
+```json
+{
+  "message": "The selected template id is invalid.",
+  "errors": {"template_id": ["The selected template id is invalid."]}
+}
+```
+
+A `500` body gives no detail of the cause. The instance writes the cause to its log. Give the `X-Request-Uuid` header of the response to the person who runs the instance.
 
 `format: jpeg` with `transparent: true` returns `422` with the message `Transparency is not supported for the JPEG format.`
 

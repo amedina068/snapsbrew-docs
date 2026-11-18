@@ -191,7 +191,7 @@ An instance without a marketing site can keep these endpoints off. Read [Free to
 
 If `SNAPSBREW_SIGNED_URL_KEY` or `SNAPSBREW_OG_TEMPLATE` is empty, the docs pages use a static image.
 
-## Logs, errors and analytics
+## Logs and errors
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
@@ -202,8 +202,6 @@ If `SNAPSBREW_SIGNED_URL_KEY` or `SNAPSBREW_OG_TEMPLATE` is empty, the docs page
 | `PAPERTRAIL_URL` | none | | The host of the `papertrail` channel. |
 | `PAPERTRAIL_PORT` | none | | The port of the `papertrail` channel. |
 | `ROLLBAR_TOKEN` | none | empty | When it is set, the `stack` channel also sends errors to Rollbar. |
-| `PLAUSIBLE_DOMAIN` | none | empty | Loads Plausible analytics for this domain. Empty loads no analytics script. |
-| `PLAUSIBLE_SCRIPT_URL` | `https://plausible.io/js/script.js` | same | The URL of the Plausible script. |
 
 ## Other Laravel variables
 

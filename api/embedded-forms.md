@@ -20,12 +20,14 @@ POST /v1/embedded-forms/{formUuid}?signature=<sig>
 
 - **Auth:** the signature in the URL
 - **Ability:** none
-- **Rate limit:** none
+- **Rate limit:** `embedded-form-submit`: 10 requests a minute for one IP address, and 60 a minute for one form
 - **Usage log:** yes, on the account of the form owner
 
 Each form has a `submit_signed_url`. Send the request to that exact URL. Do not change the query string. A signature that is wrong or missing returns `404`.
 
-TODO(owner): This route has no rate limit, and each request renders on the account of the form owner. Do you want to add a limiter to it?
+The limit counts each request, also a request with a wrong signature. A request over the limit renders nothing and writes no row in the usage log. The `api` limit does not apply to this route.
+
+The owner can change the two limits with `SNAPSBREW_EMBEDDED_FORM_SUBMITS_PER_IP` and `SNAPSBREW_EMBEDDED_FORM_SUBMITS_PER_FORM`.
 
 ### Parameters
 
@@ -65,6 +67,8 @@ The instance adds each uploaded image to the media library of the form owner.
 {
   "id": "9f1c2d3e",
   "media_url": "https://snapsbrew.example/storage/snaps/9f1c2d3e.png",
+  "width": 1200,
+  "height": 630,
   "type": "image",
   "status": "completed",
   "is_async": false,
@@ -82,14 +86,22 @@ The instance adds each uploaded image to the media library of the form owner.
 
 The output type, `image` or `pdf`, comes from the form. The render runs during the request. Each response carries an `X-Request-Uuid` header.
 
-TODO(owner): The in-app API reference (`ApiSpec`) shows the template form response inside a `data` key, but `EmbeddedFormController` returns the snap object with no `data` key. Which shape is correct?
-
 ### Errors
 
 | Status | Cause |
 |---|---|
-| `404` | The form does not exist, the signature is wrong, or the owner of the form is deactivated. |
+| `404` | The form does not exist, the signature is wrong, or the owner of the form is deactivated. A form that does not exist returns `{"message": "No query results for model [App\\Models\\Form]."}`. |
 | `422` | A collection form has no templates. The body is `{"message": "The form does not include any templates."}`. |
+| `429` | A limit for the IP address or for the form is full. Wait for the number of seconds in `Retry-After`. |
+
+The `429` body has a `code`:
+
+```json
+{
+  "message": "Too many submissions. Wait one minute, then send the form again.",
+  "code": "rate_limited"
+}
+```
 
 ## Examples
 

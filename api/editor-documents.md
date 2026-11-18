@@ -24,6 +24,16 @@ For each endpoint:
 
 The account must be a `customer` or an `admin` of the company of the template. The same accounts can read and write the document.
 
+### Errors for each endpoint
+
+| Status | Cause |
+|---|---|
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `403` | The account cannot read or change templates of the company. The body is `{"message": "This action is unauthorized."}`. |
+| `404` | The template is not in your company. The body is `{"message": "No query results for model [App\\Models\\Template]."}`. |
+| `429` | The `editor-document` limit or the `api` limit is full. Wait for the number of seconds in `Retry-After`. |
+
 ## Compare-and-swap writes
 
 Each write sends the `revision` from the last read. If the stored revision is different, the write saves nothing and returns `409`.
@@ -71,8 +81,7 @@ Returns the stored document and its revision. A template with no v2 draft return
 
 | Status | Cause |
 |---|---|
-| `403` | The account cannot read templates. |
-| `404` | The template is not in your company. |
+The request example is in [Examples](#examples).
 
 ## Apply editor operations
 
@@ -96,9 +105,24 @@ Two operations exist:
 
 `200` returns the saved document and the new revision.
 
+```json
+{
+  "document": {
+    "version": 2,
+    "layers": [
+      {"key": "headline", "type": "text", "properties": [{"name": "fontWeight", "value": 700}]}
+    ],
+    "groups": []
+  },
+  "revision": 5
+}
+```
+
+The request example is in [Examples](#examples).
+
 | Status | Cause |
 |---|---|
-| `409` | The stored revision moved. See [Compare-and-swap writes](#compare-and-swap-writes). |
+| `409` | The stored revision moved. The body has the code `editor_document_conflict`. See [Compare-and-swap writes](#compare-and-swap-writes). |
 | `422` | The body is not valid, or the document refuses an operation. |
 
 A refused operation returns a stable `code`, for example `{"code": "editor_operation_layer_not_found"}`. These codes exist:
@@ -139,10 +163,26 @@ The document has these limits: 262144 bytes, 1000 nodes, a depth of 12 and 16384
 }
 ```
 
+```bash
+curl -X PUT https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2/document \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{"revision":4,"document":{"version":2,"layers":[],"groups":[]}}'
+```
+
+`200` returns the saved document and the new revision:
+
+```json
+{
+  "document": {"version": 2, "layers": [], "groups": []},
+  "revision": 5
+}
+```
+
 | Status | Cause |
 |---|---|
-| `200` | The document is saved. The body has `document` and `revision`. |
-| `409` | The stored revision moved. |
+| `409` | The stored revision moved. The body has the code `editor_document_conflict`. |
 | `422` | The body is not valid, or the document is over a limit. |
 
 ## Inspect the editor document
@@ -151,7 +191,15 @@ The document has these limits: 262144 bytes, 1000 nodes, a depth of 12 and 16384
 GET /v1/templates/{templateUuid}/document/preflight
 ```
 
-Reads the stored document and returns its known problems. Each problem has a `code`, a JSON pointer in `path` and a `message`. An empty `issues` list means that the known checks pass. It does not prove that the render looks correct.
+Reads the stored document and returns its known problems. It changes nothing. Each problem has a `code`, a JSON pointer in `path` and a `message`. An empty `issues` list means that the known checks pass. It does not prove that the render looks correct.
+
+```bash
+curl https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2/document/preflight \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the issues and the revision that the check read:
 
 ```json
 {

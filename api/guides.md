@@ -38,6 +38,14 @@ GET /v1/guides/design
 
 Returns the canvas presets, the back-to-front layer order, typography and color rules, composition recipes, anti-patterns and a preflight checklist. Read it before you write a `layers` array.
 
+```bash
+curl https://snapsbrew.example/api/v1/guides/design \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the catalog:
+
 ```json
 {
   "data": {
@@ -57,6 +65,14 @@ GET /v1/guides/layers
 ```
 
 Returns the layer object shape, each property name, the value shape of each property, the SVG pattern designs and a worked example. A template write accepts layers in this shape. See [Layers and variants](../using-snapsbrew/layers-and-variants.md).
+
+```bash
+curl https://snapsbrew.example/api/v1/guides/layers \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the catalog:
 
 ```json
 {
@@ -85,6 +101,14 @@ Returns each property that you can set on a layer in `variants`. Each entry has 
 | `barcode_content` | string | Barcode layers |
 | `hidden` | boolean | Any layer |
 
+```bash
+curl https://snapsbrew.example/api/v1/guides/variant-properties \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the catalog:
+
 ```json
 {
   "data": [
@@ -107,6 +131,14 @@ GET /v1/guides/editor-document
 
 Returns the versioned v2 editor document contract. It has the property constraints, the persistence rules, the conflict recovery and a safe workflow. Read it before you change an editor document. See [Editor documents](editor-documents.md).
 
+```bash
+curl https://snapsbrew.example/api/v1/guides/editor-document \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the contract:
+
 ```json
 {
   "data": {
@@ -124,6 +156,14 @@ GET /v1/guides/platforms
 ```
 
 Returns one line for each platform: the size preset to start from, its dimensions and the reason for that preset. The response also has `specs_reviewed`, the month of the last check of the published specs.
+
+```bash
+curl https://snapsbrew.example/api/v1/guides/platforms \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the list:
 
 ```json
 {
@@ -153,10 +193,29 @@ Returns what one platform does to an image. The guide has the crop, the UI safe 
 
 The endpoint accepts aliases. `/v1/guides/platforms/insta` returns the same guide as `/v1/guides/platforms/instagram`.
 
+```bash
+curl https://snapsbrew.example/api/v1/guides/platforms/instagram \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the guide. The example shows four fields only:
+
+```json
+{
+  "data": {
+    "platform": "instagram",
+    "name": "Instagram",
+    "specs_reviewed": "2026-09",
+    "start_here": "instagram_post"
+  }
+}
+```
+
 | Status | Cause |
 |---|---|
 | `404` | No guide matches the key. The body lists each valid key in `available`. |
-| `422` | The key has more than 64 characters. |
+| `422` | The key has more than 64 characters. The message is under `errors.platform`. |
 
 ```json
 {
@@ -172,6 +231,14 @@ GET /v1/guides/purposes
 ```
 
 Returns one line for each image purpose: what the image is, when to use it and the size presets that fit it.
+
+```bash
+curl https://snapsbrew.example/api/v1/guides/purposes \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the list:
 
 ```json
 {
@@ -200,25 +267,47 @@ Returns the job of one kind of image. The guide has the size presets, the rules,
 
 The endpoint accepts aliases. `/v1/guides/purposes/og` returns the same guide as `/v1/guides/purposes/link_preview`.
 
+```bash
+curl https://snapsbrew.example/api/v1/guides/purposes/link_preview \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the guide. The example shows three fields only:
+
+```json
+{
+  "data": {
+    "purpose": "link_preview",
+    "name": "Link preview / meta tag image",
+    "layer_recipe": "base fill -> optional photo with a dark scrim -> headline -> supporting line -> logo."
+  }
+}
+```
+
 | Status | Cause |
 |---|---|
 | `404` | No guide matches the key. The body lists each valid key in `available`. |
-| `422` | The key has more than 64 characters. |
+| `422` | The key has more than 64 characters. The message is under `errors.purpose`. |
+
+```json
+{
+  "message": "No purpose guide matches `wallpaper`.",
+  "available": ["link_preview", "feed_post", "carousel", "story", "profile_picture", "cover", "video_thumbnail", "ad", "product_shot", "email_header", "article_header", "presentation_slide"]
+}
+```
 
 ## Errors for all guide endpoints
 
 | Status | Cause |
 |---|---|
-| `401` | The token is missing or wrong. |
-| `403` | The token has no `api_requests` ability. |
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. |
 
-## Examples
+## PHP example
 
-```bash
-curl https://snapsbrew.example/api/v1/guides/platforms/instagram \
-  -H 'Authorization: Bearer <your-token>' \
-  -H 'Accept: application/json'
-```
+Keep a guide in a cache:
 
 ```php
 use Illuminate\Support\Facades\Cache;
