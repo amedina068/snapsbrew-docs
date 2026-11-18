@@ -102,7 +102,7 @@ server {
 - **Signed URLs.** A signed URL has a `signature` query parameter. The proxy must send the query string without changes.
 - **The MCP server.** `/mcp` uses Streamable HTTP. Do not cut long responses on this path.
 
-TODO(owner): Does the MCP server send streamed (SSE) responses that need `proxy_buffering off` in NGINX, or are all responses plain JSON?
+Most responses of the MCP server are plain JSON. The tools `preview-template`, `preview-snap` and `preview-design` answer with `Content-Type: text/event-stream`. Each of these streams holds one message, and the server sends it when the tool ends. Thus NGINX buffering does not break a client, and `proxy_buffering off` is not necessary.
 
 ## Change the host of an instance
 

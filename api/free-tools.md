@@ -58,9 +58,9 @@ POST /v1/tools/certificate-creator
 | `date` | string | Text for the layer `date`. 100 characters or fewer. |
 | `description` | string | Text for the layer `description`. 1000 characters or fewer. |
 
-The instance renders a **PDF** and returns its URL. The instance removes the snap one day later.
+Each field replaces the text of the layer with the same key. A field that you do not send keeps the text of the template.
 
-TODO(owner): `CertificateCreatorController` sends each value as `{"layer": ..., "modifications": {"text": ...}}`. `LayerBuilder` reads `text` at the top level of a variant, so the certificate text does not seem to apply. Is this a bug?
+The instance renders a **PDF** and returns its URL. The instance removes the snap one day later.
 
 ## Twitter graph image creator
 

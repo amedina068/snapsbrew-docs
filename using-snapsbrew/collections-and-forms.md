@@ -78,14 +78,13 @@ At least one layer in the collection must be selected.
 The form page shows:
 
 - **Embedded form link**. Share this link or put it in an `<iframe>`. Read [Embedded forms](embedded-forms.md).
+- **Submit link**. Send the layer values to this URL to use your own form. Read [Embedded forms](embedded-forms.md).
 - **Form layers**. Each selected layer with its type and its default value.
 - **Form snaps**. The snaps that the form made, with the date and the image URL.
 
 ### Edit a form
 
 Click **Edit** on the form page. You can change the title, the selected layers and the format. The form links do not change.
-
-TODO(owner): `FormController::edit` and `FormController::update` compare `formable_type` with `Form::SCOPE_TEMPLATE` (the string `template`). The stored value is the model class name. Does **Edit** on a template form return 404?
 
 The web app has no action that deletes a form.
 

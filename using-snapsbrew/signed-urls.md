@@ -55,7 +55,7 @@ Every parameter in the URL is part of the signature. If you add a parameter afte
 
 The order of the parameters in the final URL is not important. The server sorts them again.
 
-TODO(owner): The in-app guide at /documentation/guides/signed-urls says base64url. The controller decodes standard base64. Which one is correct?
+Encode `variants` with standard base64, with `+`, `/` and `=` padding. Do not use base64url. The server decodes standard base64, so a base64url value decodes to the wrong bytes.
 
 ### PHP
 

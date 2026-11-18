@@ -42,7 +42,7 @@ A type can also have a variant property. A variant property lets a snap request 
 | `app/Parsers/TemplateLayerParser.php` | Add the type to `parseLayer()`. The parser builds the `available_modifications` of a layer in the template responses of the API. |
 | `app/Mcp/Tools/Concerns/InteractsWithSnaps.php` | Add the variant property to the `variants` schema of the MCP tools. |
 
-TODO(owner): The `variants` schema in `InteractsWithSnaps` lists `qr_content` but not `barcode_content`, although `VariantRules` accepts it. Is this intentional?
+The `variants` schema in `InteractsWithSnaps` lists `qr_content` and `barcode_content`. Add the new property next to them.
 
 ### 4. Forms
 
@@ -65,7 +65,7 @@ TODO(owner): The `variants` schema in `InteractsWithSnaps` lists `qr_content` bu
 
 The `CONTRIBUTING.md` file of the app repository says that a new Vue component must be registered in `resources/js/app.js`. `PropertyBarcode.vue` is imported in `LayerPropertiesSettings.vue` instead.
 
-TODO(owner): Does the registration rule apply to a property panel that another component imports? `PropertyBarcode.vue` is not registered in `resources/js/app.js`.
+The registration rule applies only to a component that a Blade view uses as a custom element. The app mounts one Vue app, and `resources/js/app.js` registers these components on it. A property panel that another component imports needs no registration. `LayerPropertiesSettings.vue` imports `PropertyBarcode.vue` and registers it locally.
 
 ### 6. The v2 editor document
 

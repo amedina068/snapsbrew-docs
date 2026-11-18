@@ -102,6 +102,10 @@ Each API request and each render is in the usage log. The usage log stores the r
 
 ## Report a security problem
 
-Do not open a public issue for a security problem. Send the details to the maintainer privately, through the contact on the GitHub profile of the repository owner.
+Do not open a public issue, a discussion or a pull request for a security problem. Report the problem in private through a GitHub security advisory:
 
-TODO(owner): Do you want a `SECURITY.md` file with a private email address or GitHub private vulnerability reporting?
+1. Open the **Security** tab of the app repository.
+2. Click **Report a vulnerability**.
+3. Fill in the form and submit it.
+
+The `SECURITY.md` file of the app repository gives the full policy: the supported versions, the items to put in the report and the scope.
