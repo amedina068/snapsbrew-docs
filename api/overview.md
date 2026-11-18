@@ -10,13 +10,17 @@ The Snapsbrew REST API renders snaps from templates, and it manages templates, m
 
 ## Base URL
 
-The API is under `/api` on the URL of the instance. The version is part of each path.
+The API is under `/api` on the URL of the instance. The base URL has this form:
 
 ```text
-https://snapsbrew.example/api/v1
+https://<your-instance>/api
 ```
 
+The version is part of each path, for example `/v1/snaps`. The full URL of that endpoint is `https://<your-instance>/api/v1/snaps`.
+
 `APP_URL` sets the host. The examples in these pages use `https://snapsbrew.example`.
+
+The signed image URL is the one exception. It is on the root of the instance, not under `/api`: `https://<your-instance>/signed-url/image.jpg`. See [Signed URLs](signed-urls.md).
 
 ## Authentication
 
@@ -69,9 +73,10 @@ A token without `api_requests` gets `403` with the message `Invalid ability prov
 | Watermarked HTML previews | [Preview](preview.md) |
 | Template labels | [Tags](tags.md) |
 | Form submissions without a token | [Embedded forms](embedded-forms.md) |
+| Image URLs that a server signs | [Signed URLs](signed-urls.md) |
 | Public tools for a marketing site | [Free tools](free-tools.md) |
 
-The instance also serves an OpenAPI file and a Postman collection. See [OpenAPI and Postman](openapi.md).
+The instance also serves an OpenAPI file and a Postman collection. See [OpenAPI and Postman](openapi.md). Client libraries exist for four languages. See [SDKs](../sdks/overview.md).
 
 ## Response shapes
 
@@ -96,7 +101,9 @@ Two list styles exist.
 
 **Cursor pagination.** `GET /v1/templates` and `GET /v1/screenshots` return `meta.next_cursor` and `meta.previous_cursor`. To read the next page, send the value of `meta.next_cursor` as the `cursor` query parameter. When `meta.next_cursor` is `null`, you have the last page.
 
-**Page pagination.** `GET /v1/media` takes a `page` query parameter. The response has `links` and `meta` with `current_page`, `per_page` and `total`.
+**Page pagination.** `GET /v1/media` takes a `page` query parameter. The response is a flat Laravel paginator. It has `current_page`, `per_page`, `total`, `next_page_url` and `last_page` next to `data`. When `next_page_url` is `null`, you have the last page.
+
+`GET /v1/tags` has no pagination. It returns 15 tags or fewer.
 
 ## Rate limits
 
@@ -108,10 +115,13 @@ The instance counts requests for each user. If a request has no user, the instan
 | `preview` | 10 requests a minute | `GET /v1/templates/{templateUuid}/preview` and `GET /v1/snaps/preview`. |
 | `editor-document` | 30 requests a minute for one user, and 180 a minute for one company | The four editor document routes. |
 | `mcp` | 30 requests a minute | The MCP server at `/mcp`. |
+| `embedded-form-submit` | 10 requests a minute for one IP address, and 60 a minute for one form | `POST /v1/embedded-forms/{formUuid}`. |
+| `signed-url` | 600 requests a minute for one IP address | `GET /signed-url/image.jpg`. |
+| `free-tools` | 5 requests a minute and 50 a day for one IP address | The free tool routes. See [Free tools](free-tools.md). |
 
-The preview and editor document routes also count against the `api` limiter.
+The preview and editor document routes also count against the `api` limiter. The embedded form route and the signed URL route do not.
 
-`POST /v1/embedded-forms/{formUuid}` has no rate limit.
+The owner can change the limits of the last three rows with environment variables. See [Embedded forms](embedded-forms.md#submit-an-embedded-form), [Signed URLs](signed-urls.md) and [Free tools](free-tools.md).
 
 Each limited response carries these headers:
 
@@ -124,19 +134,66 @@ When you go over a limit, the response is `429`. It also carries `Retry-After` (
 
 ## Errors
 
+Each endpoint with a bearer token can return `401`, `403` and `429`. The page of each endpoint lists its other statuses.
+
 | Status | When | Body |
 |---|---|---|
 | `401` | The token is missing, wrong, revoked or belongs to a deactivated user. | `{"message": "Unauthenticated."}` |
-| `403` | The token has no `api_requests` ability, or a policy refuses the action. | `{"message": "..."}` |
-| `404` | The resource does not exist in your company. | `{"message": "..."}` |
-| `409` | A conflict: an idempotency key in progress, an editor document revision that moved, or a legacy edit of a v2 template. | `{"message": "..."}` or `{"code": "..."}` |
+| `403` | The token has no `api_requests` ability. | `{"message": "Invalid ability provided."}` |
+| `403` | A policy refuses the action, for example a template write from an account that is not a `customer` or an `admin`. | `{"message": "This action is unauthorized."}` |
+| `404` | The record does not exist in your company. | `{"message": "No query results for model [App\\Models\\Template]."}` |
+| `409` | A conflict. See [Conflict codes](#conflict-codes). | `{"code": "..."}`, sometimes with a `message` |
 | `422` | A field failed validation. | `{"message": "...", "errors": {"field": ["..."]}}` |
+| `422` | The editor document refuses a `PATCH` operation. | `{"code": "editor_operation_..."}` |
 | `429` | A rate limit is full. | `{"message": "Too Many Attempts."}` |
-| `500` | The render or the server failed. | `{"message": "..."}` |
+| `500` | `POST /v1/snaps` or `POST /v1/snaps/batches` failed on the server. | `{"message": "...", "code": "internal_error"}` |
+
+A `404` for a missing record names the model class. A missing template names `App\Models\Template`, and a missing screenshot names `App\Models\Screenshot`. A few endpoints use their own `404` message. For example, a missing batch returns `No batch with that id exists in your account.`
 
 A resource from another company returns `404`, the same as a resource that does not exist.
 
+A `422` body has one key for each field in `errors`. The value is a list of messages:
+
+```json
+{
+  "message": "The title field is required.",
+  "errors": {"title": ["The title field is required."]}
+}
+```
+
+A `429` response carries these headers:
+
+| Header | Value |
+|---|---|
+| `Retry-After` | The number of seconds to wait. |
+| `X-RateLimit-Limit` | The number of requests that the limit allows in one minute. |
+| `X-RateLimit-Remaining` | The number of requests that are left in this minute. |
+
+A `500` from `POST /v1/snaps` or `POST /v1/snaps/batches` holds a fixed message and the code `internal_error`. The body gives no detail of the cause. The instance writes the cause to its log. Give the `X-Request-Uuid` header of the response to the person who runs the instance.
+
 Do not branch on the text of `message`. The text can change. Where an endpoint returns a `code`, branch on the `code`.
+
+### Conflict codes
+
+| `code` | Endpoint | Cause | What to do |
+|---|---|---|---|
+| `idempotency_key_in_progress` | `POST /v1/snaps`, `POST /v1/snaps/batches` | Another request with the same key is in progress. | Wait a short time. Then send the request again with the same key. |
+| `idempotency_key_belongs_to_batch` | `POST /v1/snaps` | A batch owns the key. | Send a new key. |
+| `idempotency_key_belongs_to_snap` | `POST /v1/snaps/batches` | A single snap owns the key. | Send a new key. |
+| `editor_document_conflict` | `PATCH` and `PUT /v1/templates/{templateUuid}/document` | The stored revision moved. | Read `current_document` and `current_revision`. Then apply your change again. |
+| `legacy_edit_rejected_for_v2` | `PATCH /v1/templates/{templateIdentifier}` | The template uses the v2 editor document. | Use [Editor documents](editor-documents.md). |
+
+For each `409`, the instance saved nothing and created nothing.
+
+An editor document conflict returns the current state of the document:
+
+```json
+{
+  "code": "editor_document_conflict",
+  "current_revision": 5,
+  "current_document": {"version": 2, "layers": [], "groups": []}
+}
+```
 
 ## Request IDs
 
@@ -163,8 +220,8 @@ The guide routes, the preview routes, the media routes, the template writes and 
 - The instance keeps a key for 24 hours. After that, the same key starts a new render.
 - A key belongs to your company.
 - A replayed response carries the header `X-Idempotent-Replay: true`.
-- If another request with the same key is still in progress, the response is `409`. Nothing is created. Send the request again after a short wait.
-- A key that a single snap used returns `409` on the batch endpoint.
+- If another request with the same key is still in progress, the response is `409` with the code `idempotency_key_in_progress`. Nothing is created. Send the request again after a short wait.
+- A key that a single snap used returns `409` on the batch endpoint. A key that a batch used returns `409` on `POST /v1/snaps`.
 - `POST /v1/snaps` with `collection_id` does not accept a key.
 
 The scheduler removes old keys every hour with `php artisan snaps:prune-idempotency-keys`. See [Scheduler](../self-hosting/scheduler.md).

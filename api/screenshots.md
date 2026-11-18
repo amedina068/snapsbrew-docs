@@ -21,6 +21,14 @@ For each endpoint:
 - **Rate limit:** `api` (60 a minute)
 - **Usage log:** yes
 
+### Errors for each endpoint
+
+| Status | Cause |
+|---|---|
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. |
+
 ## List screenshots
 
 ```http
@@ -30,6 +38,14 @@ GET /v1/screenshots
 | Parameter | In | Required | Description |
 |---|---|---|---|
 | `cursor` | query | No | The value of `meta.next_cursor` from the previous page. |
+
+```bash
+curl https://snapsbrew.example/api/v1/screenshots \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns a page of screenshots:
 
 ```json
 {
@@ -49,6 +65,10 @@ GET /v1/screenshots
 
 The list names the ID `uuid`. The single read and the create name the same value `id`.
 
+| Status | Cause |
+|---|---|
+| `422` | `cursor` is not a string. The message is under `errors.cursor`. |
+
 ## Get a screenshot
 
 ```http
@@ -58,6 +78,14 @@ GET /v1/screenshots/{screenshotUuid}
 | Parameter | In | Required | Description |
 |---|---|---|---|
 | `screenshotUuid` | path | Yes | The UUID of the screenshot. |
+
+```bash
+curl https://snapsbrew.example/api/v1/screenshots/a1b2c3 \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns the screenshot:
 
 ```json
 {
@@ -72,7 +100,7 @@ GET /v1/screenshots/{screenshotUuid}
 }
 ```
 
-`404` means that the screenshot is not in your company.
+`404` means that the screenshot is not in your company. The body is `{"message": "No query results for model [App\\Models\\Screenshot]."}`.
 
 ## Create a screenshot
 
@@ -92,12 +120,20 @@ TODO(owner): `url` is not required in `ScreenshotController::store()`. What does
 
 The host of `url` must resolve to global addresses only. The scheme, host and port of `APP_URL` are also accepted. A private, loopback, link-local, shared, NAT64, 6to4 or reserved address returns `422`.
 
+The request example is in [Examples](#examples).
+
 `200` returns the screenshot in the same shape as the single read.
 
 | Status | Cause |
 |---|---|
-| `401` | The token is missing or wrong. |
-| `422` | `url` is not a public URL, or `width` or `height` is not an integer. |
+| `422` | `url` is not a public URL, or `width` or `height` is not an integer from 1 to 4000. |
+
+```json
+{
+  "message": "The width must be at least 1.",
+  "errors": {"width": ["The width must be at least 1."]}
+}
+```
 
 ## Examples
 

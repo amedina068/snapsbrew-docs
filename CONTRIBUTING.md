@@ -71,7 +71,7 @@ Start a warning with `WARNING:` (a risk to data or security) or `CAUTION:` (a ri
 ## Pull requests
 
 1. Make one change in each pull request.
-2. Run `node scripts/check-docs.mjs`. If you have an app checkout, also set `SNAPSBREW_APP_PATH`.
+2. Run `node scripts/check-docs.mjs`. If you have an app checkout, also set `SNAPSBREW_APP_PATH`. Then the script also compares the endpoints on the API pages with the OpenAPI file of the app.
 3. Fill in the pull request template.
 
 The CI must pass before a merge.

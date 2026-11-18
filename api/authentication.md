@@ -45,6 +45,7 @@ Use this endpoint to make sure that a token works.
 |---|---|
 | `401` | The token is missing, wrong or revoked, or the owner deactivated the user. The body is `{"message": "Unauthenticated."}`. |
 | `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. The body is `{"message": "Too Many Attempts."}`. |
 
 ### Examples
 

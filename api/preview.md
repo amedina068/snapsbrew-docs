@@ -52,6 +52,22 @@ GET /v1/templates/{templateUuid}/preview
 
 Without `variants`, the preview shows the default content of each layer.
 
+```bash
+curl 'https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2/preview?variants[0][layer]=headline&variants[0][text]=Hello' \
+  -H 'Authorization: Bearer <your-token>' \
+  --globoff \
+  --output preview.html
+```
+
+`200` returns a `text/html` document:
+
+```html
+<!DOCTYPE html>
+<html>
+  <!-- The template with the variants and the PREVIEW watermark. -->
+</html>
+```
+
 ## Preview a snap
 
 ```http
@@ -63,11 +79,15 @@ GET /v1/snaps/preview
 | `template_id` | query | Yes | The UUID of the template. |
 | `variants` | query | No | The layer overrides. |
 
+The request example is in [Examples](#examples). The response is the same `text/html` document as a template preview.
+
 ## Errors
 
 | Status | Cause |
 |---|---|
-| `404` | The template is not in your company. |
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `404` | The template is not in your company. The body is `{"message": "No query results for model [App\\Models\\Template]."}`. |
 | `422` | A field failed a rule, for example an `image_url` that is not public, or no `template_id`. |
 | `429` | The `preview` limit of 10 a minute is full. Wait for the time in `Retry-After`. |
 
@@ -76,6 +96,7 @@ GET /v1/snaps/preview
 ```bash
 curl 'https://snapsbrew.example/api/v1/snaps/preview?template_id=<uuid>&variants[0][layer]=headline&variants[0][text]=Hello' \
   -H 'Authorization: Bearer <your-token>' \
+  --globoff \
   --output preview.html
 ```
 
@@ -99,3 +120,5 @@ Storage::put('previews/headline.html', $html);
 ```
 
 The Laravel `Http` client encodes the nested `variants` array in the query string.
+
+The `--globoff` option stops curl from reading the `[` and `]` characters as a URL pattern.

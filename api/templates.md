@@ -26,6 +26,16 @@ For each endpoint:
 
 The three `GET` routes go into the usage log. The writes do not.
 
+### Errors for each endpoint
+
+| Status | Cause |
+|---|---|
+| `401` | The token is missing or wrong. The body is `{"message": "Unauthenticated."}`. |
+| `403` | The token has no `api_requests` ability. The body is `{"message": "Invalid ability provided."}`. |
+| `429` | The `api` limit is full. Wait for the number of seconds in `Retry-After`. |
+
+Each section below lists the other statuses of its endpoint.
+
 ## Draft and published version
 
 A template has a draft and zero or more published versions. A write changes the draft. Snaps and previews render the newest published version. An edit has no effect on a render until you publish the template. See [Templates](../using-snapsbrew/templates.md).
@@ -40,7 +50,13 @@ GET /v1/templates
 |---|---|---|---|
 | `cursor` | query | No | The value of `meta.next_cursor` from the previous page. |
 
-`200` returns a page of templates. Each layer shows its key, its type and the overrides that it accepts.
+```bash
+curl https://snapsbrew.example/api/v1/templates \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
+`200` returns a page of templates. Each layer shows its key in `layer` and the overrides that it accepts in `available_modifications`. Each override shows its current value. A layer that accepts no override has an empty list.
 
 ```json
 {
@@ -53,7 +69,6 @@ GET /v1/templates
       "layers": [
         {
           "layer": "review_title",
-          "type": "text",
           "available_modifications": {"text": "The worst Time-Travel movie ever made"}
         }
       ],
@@ -64,7 +79,9 @@ GET /v1/templates
 }
 ```
 
-A layer `type` is one of `image`, `text`, `empty`, `qr_code` or `barcode`.
+| Status | Cause |
+|---|---|
+| `422` | `cursor` is not a string. The message is under `errors.cursor`. |
 
 ## List canvas size presets
 
@@ -73,6 +90,12 @@ GET /v1/templates/sizes
 ```
 
 Returns each size preset that a template write accepts as `size`. Each preset has its dimensions, its aspect ratio and a safe margin.
+
+```bash
+curl https://snapsbrew.example/api/v1/templates/sizes \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
 
 ```json
 {
@@ -100,6 +123,12 @@ GET /v1/templates/{templateUuid}
 |---|---|---|---|
 | `templateUuid` | path | Yes | The UUID of the template. |
 
+```bash
+curl https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2 \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
 `200` returns the template, its draft layers and its publish state.
 
 ```json
@@ -113,7 +142,6 @@ GET /v1/templates/{templateUuid}
     "layers": [
       {
         "layer": "review_title",
-        "type": "text",
         "available_modifications": {"text": "The worst Time-Travel movie ever made"}
       }
     ],
@@ -131,7 +159,7 @@ GET /v1/templates/{templateUuid}
 | `published_version` | The version number that snaps and previews render. It is `null` until the first publish. |
 | `has_unpublished_edits` | `true` when the draft is not the same as the published version. A layer edit, a resize and an editor document edit set it. |
 
-`404` means that the template is not in your company.
+`404` means that the template is not in your company. The body is `{"message": "No query results for model [App\\Models\\Template]."}`.
 
 ## Create a template
 
@@ -170,8 +198,10 @@ If the dimensions match a preset, the server stores the template under that pres
 
 | Status | Cause |
 |---|---|
-| `403` | The account cannot create templates. |
+| `403` | The account cannot create templates. The body is `{"message": "This action is unauthorized."}`. |
 | `422` | The body has no `size` and no `width` and `height`, or a field failed a rule. |
+
+The request example is in [Examples](#examples).
 
 ```json
 {
@@ -202,11 +232,33 @@ The body takes the same fields as the create. `title` is required. The other fie
 - `layers: null`, `width: null` and `height: null` keep the stored value.
 - `groups: null` removes the groups.
 
+```bash
+curl -X PATCH https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2 \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json' \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Updated title"}'
+```
+
 `200` returns the same six fields as the create and the message `Template updated successfully`. Read `data.size`, `data.width` and `data.height` after the write.
+
+```json
+{
+  "data": {
+    "uuid": "141e8454-8aa1-420a-bd0b-18a85ba949a2",
+    "title": "Updated title",
+    "size": "open_graph",
+    "width": 1200,
+    "height": 630,
+    "created_at": "2026-05-01T12:00:00Z"
+  },
+  "message": "Template updated successfully"
+}
+```
 
 | Status | Cause |
 |---|---|
-| `403` | The account cannot update templates of the company. |
+| `403` | The account cannot update templates of the company. The body is `{"message": "This action is unauthorized."}`. |
 | `404` | The template is not in your company. |
 | `409` | The template uses the v2 editor document. The body is `{"code": "legacy_edit_rejected_for_v2"}`. Use [Editor documents](editor-documents.md) for this template. |
 | `422` | A field failed a rule. |
@@ -236,7 +288,12 @@ You can send this call again with no risk. If the draft has no new edits, the ca
 
 `data.id` is deprecated. It has the same value as `data.uuid`. Read `data.uuid`.
 
-`404` means that the template is not in your company.
+| Status | Cause |
+|---|---|
+| `403` | The account cannot update templates of the company. The body is `{"message": "This action is unauthorized."}`. |
+| `404` | The template is not in your company. |
+
+The request example is in [Examples](#examples).
 
 ## Delete a template
 
@@ -246,6 +303,12 @@ DELETE /v1/templates/{templateIdentifier}
 
 Deletes a template. The path accepts the UUID or the numeric ID.
 
+```bash
+curl -X DELETE https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2 \
+  -H 'Authorization: Bearer <your-token>' \
+  -H 'Accept: application/json'
+```
+
 `200` returns a message only:
 
 ```json
@@ -254,7 +317,7 @@ Deletes a template. The path accepts the UUID or the numeric ID.
 
 | Status | Cause |
 |---|---|
-| `403` | The account cannot delete templates of the company. |
+| `403` | The account cannot delete templates of the company. The body is `{"message": "This action is unauthorized."}`. |
 | `404` | The template is not in your company. |
 
 ## Examples
