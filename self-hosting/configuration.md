@@ -24,14 +24,15 @@ After you change `.env` on a server that caches the configuration, run `php arti
 | Variable | Default | Example | What it does |
 |---|---|---|---|
 | `APP_NAME` | `Laravel` | `Snapsbrew` | The name of the app in the UI, the emails and the API docs. It is also part of the default cache, Redis and Horizon prefixes. |
-| `APP_ENV` | `production` | `local` | The environment. Horizon uses 10 worker processes in `production` and 3 in `local`. Another value starts no Horizon worker. |
+| `APP_ENV` | `production` | `production` | The environment. Horizon uses 10 worker processes in `production` and 3 in `local`. Another value starts no Horizon worker. |
 | `APP_KEY` | none | none | The encryption key. Make it with `php artisan key:generate`. The setup token and the stored signed-URL keys depend on it. |
-| `APP_DEBUG` | `false` | `true` | Shows the error details in the browser. Set `false` on a server. |
+| `APP_DEBUG` | `false` | `false` | Shows the error details in the browser. Set `true` only for local development. |
 | `APP_URL` | `http://localhost` | `http://localhost:8000` | The public URL of the instance. Links, the API docs, the signed URLs and the URLs of the `public` disk use it. |
 | `APP_PREVIOUS_URLS` | empty | empty | Earlier hosts of the instance, comma separated. Embedded form URLs that the app signed on one of these hosts keep working. |
 | `APP_PORT` | `8080` | | Docker only. The host port of the `web` container. It is in `.env.docker.example`. |
+| `APP_BIND` | `127.0.0.1` | | Docker only. The host interface of `APP_PORT`. `0.0.0.0` takes traffic from other hosts. |
 | `ASSET_URL` | none | | A different host for the front-end assets. |
-| `TRUSTED_PROXIES` | none | commented out | The proxies that the app trusts for the `X-Forwarded-*` headers. Set `*` when a reverse proxy terminates TLS. |
+| `TRUSTED_PROXIES` | none | commented out | The IP addresses and CIDR ranges of the proxies that the app trusts for the `X-Forwarded-*` headers, comma separated. Do not set `*`. Read [Trusted proxies](reverse-proxy-and-tls.md#trusted-proxies). |
 | `BCRYPT_ROUNDS` | `10` | | The cost of the password hash. |
 
 ## Accounts and instance
@@ -43,6 +44,7 @@ After you change `.env` on a server that caches the configuration, run `php arti
 | `SNAPSBREW_SUPPORT_EMAIL` | none | empty | The email that the API docs show. If it is empty, the docs show `MAIL_FROM_ADDRESS`. |
 | `SNAPSBREW_PRIVACY_URL` | none | empty | Your privacy policy. `llms.txt` links it when it is set. |
 | `SNAPSBREW_TERMS_URL` | none | empty | Your terms of service. `llms.txt` links it when it is set. |
+| `SNAPSBREW_INVITATIONS_PER_COMPANY_PER_DAY` | `20` | `20` | The maximum number of invitation emails that one company can send in 24 hours. |
 
 The app ships no privacy policy and no terms of service. If your instance is public, write your own pages.
 
@@ -73,7 +75,7 @@ The app ships no privacy policy and no terms of service. If your instance is pub
 | `SESSION_CONNECTION` | none | | The connection for the `database` or `redis` session driver. |
 | `SESSION_STORE` | none | | The cache store for a cache-based session driver. |
 | `SESSION_DOMAIN` | none | | The domain of the session cookie. |
-| `SESSION_SECURE_COOKIE` | none | | Sends the session cookie only over HTTPS when it is `true`. |
+| `SESSION_SECURE_COOKIE` | `true` when `APP_URL` starts with `https://` | commented out | Sends the session cookie only over HTTPS when it is `true`. |
 | `REDIS_HOST` | `127.0.0.1` | `127.0.0.1` | The Redis host. |
 | `REDIS_PASSWORD` | none | `null` | The Redis password. |
 | `REDIS_PORT` | `6379` | `6379` | The Redis port. |
@@ -171,6 +173,11 @@ Read [OAuth](../mcp/oauth.md).
 |---|---|---|---|
 | `SNAPSBREW_FREE_TOOLS_ENABLED` | `false` | `false` | Turns on the four public `POST /api/v1/tools/*` endpoints. They return 404 while it is `false`. |
 | `SNAPSBREW_FREE_TOOLS_USER_ID` | `1` | `1` | The user that owns the screenshots of the free screenshot tool. |
+| `SNAPSBREW_FREE_TOOLS_CERTIFICATE_TEMPLATE` | none | empty | The UUID of the template that the certificate tool renders. |
+| `SNAPSBREW_FREE_TOOLS_TESTIMONIAL_TEMPLATE` | none | empty | The UUID of the template that the testimonial tool renders. |
+| `SNAPSBREW_FREE_TOOLS_TWITTER_GRAPH_TEMPLATE` | none | empty | The UUID of the template that the Twitter graph tool renders. |
+| `SNAPSBREW_FREE_TOOLS_REQUESTS_PER_MINUTE_PER_IP` | `5` | `5` | The requests that one IP can send to all free tools together in one minute. |
+| `SNAPSBREW_FREE_TOOLS_REQUESTS_PER_DAY_PER_IP` | `50` | `50` | The requests that one IP can send to all free tools together in one day. |
 
 An instance without a marketing site can keep these endpoints off. Read [Free tools](../api/free-tools.md).
 

@@ -109,9 +109,9 @@ Make a backup of these volumes. Read [Backups](../self-hosting/backups.md).
 
 ## Ports and HTTPS
 
-The app answers on port 8080 of the host. To change the port, set `APP_PORT` in `.env`.
+The app answers on port 8080 of the loopback interface (`127.0.0.1`) of the host. To change the port, set `APP_PORT` in `.env`. To take traffic from other hosts with no proxy, set `APP_BIND=0.0.0.0`.
 
-The stack does not serve HTTPS. To serve HTTPS, put a reverse proxy in front of the app and set `TRUSTED_PROXIES=*`. Read [Reverse proxy and TLS](../self-hosting/reverse-proxy-and-tls.md).
+The stack does not serve HTTPS. To serve HTTPS, put a reverse proxy on the host in front of the app. Then set `TRUSTED_PROXIES` to the address of the proxy. Do not set it to `*`. Read [Reverse proxy and TLS](../self-hosting/reverse-proxy-and-tls.md).
 
 The Browserless port is not published. The token is the only protection of Browserless, so its port stays inside the Compose network.
 

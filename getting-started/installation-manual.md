@@ -76,7 +76,7 @@ BROWSERLESS_URL=http://127.0.0.1:3000
 BROWSERLESS_TOKEN=<the Browserless token>
 ```
 
-If a reverse proxy terminates TLS in front of the app, also set `TRUSTED_PROXIES=*`. Read [Configuration](../self-hosting/configuration.md) for every variable.
+If a reverse proxy terminates TLS in front of the app, also set `TRUSTED_PROXIES` to the address of the proxy. Do not set it to `*`. Read [Reverse proxy and TLS](../self-hosting/reverse-proxy-and-tls.md#trusted-proxies) and [Configuration](../self-hosting/configuration.md).
 
 ## Prepare the database and the instance
 

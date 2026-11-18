@@ -124,7 +124,16 @@ A proxy adds `X-Frame-Options` or a `frame-ancestors` rule. Read [Reverse proxy 
 
 ### Links and signed URLs start with `http://` behind HTTPS
 
-The app does not trust the proxy headers. Set `TRUSTED_PROXIES=*` and make sure that the proxy sends `X-Forwarded-Proto`.
+The app does not trust the proxy headers. Set `TRUSTED_PROXIES` to the address of the proxy, and make sure that the proxy sends `X-Forwarded-Proto`. Do not set it to `*`. Read [Trusted proxies](reverse-proxy-and-tls.md#trusted-proxies).
+
+### Every page returns 400 behind a proxy
+
+The app answers `400` to a host that is not the host of `APP_URL`, a host in `APP_PREVIOUS_URLS` or a loopback host.
+
+1. Make sure that `APP_URL` has the public host of the instance.
+2. Make sure that the proxy sends the original `Host` header. With NGINX, set `proxy_set_header Host $host;`.
+3. If the proxy sends `X-Forwarded-Host`, make sure that it sends the public host.
+4. If the instance moved from another host, add the old host to `APP_PREVIOUS_URLS`.
 
 ### Invitation and password emails do not arrive
 

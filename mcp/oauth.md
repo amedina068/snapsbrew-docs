@@ -84,6 +84,14 @@ The instance accepts a redirect URI only in these cases:
 
 If a redirect URI is not accepted, the endpoint returns the error `invalid_redirect_uri`.
 
+The endpoint also has these limits:
+
+- One IP address can register 3 clients each minute and 20 each day. Then the endpoint returns `429`.
+- A request can have 5 redirect URIs or fewer. Each URI can have 2000 characters or fewer. Otherwise the endpoint returns `400` with `invalid_redirect_uri`.
+- The request body can be 16 KB or less. Otherwise the endpoint returns `413` with `invalid_client_metadata`.
+
+The scheduler runs `php artisan oauth-clients:prune` every day. The command deletes each registered client that got no access token in 7 days.
+
 ## Redirect domains
 
 `MCP_REDIRECT_DOMAINS` is a comma-separated list of scheme and host pairs. The default value is `https://claude.ai,https://claude.com`.

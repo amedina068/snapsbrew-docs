@@ -23,7 +23,7 @@ This page lists the controls that Snapsbrew has and the settings that you must g
 
 With `APP_DEBUG=true`, an error page shows the code, the settings and the request. Never use it on a public instance.
 
-With `APP_ENV=local`, Horizon lets every visitor open `/horizon`. Use `APP_ENV=production` on a server. Read [Queues and Horizon](queues-and-horizon.md).
+`.env.example` sets `APP_ENV=production` and `APP_DEBUG=false`. Use these values on a server. Only the owner can open `/horizon`, in every environment. Read [Queues and Horizon](queues-and-horizon.md).
 
 ## The owner areas
 
