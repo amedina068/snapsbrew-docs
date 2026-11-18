@@ -65,7 +65,7 @@ The queue must run for async snaps. Read [Queues and Horizon](../self-hosting/qu
 
 ## The webhook
 
-When an async snap is complete, the app sends one `POST` request to `webhook_url`. The body is JSON:
+When an async snap finishes, the app sends one `POST` request to `webhook_url`. The `event` is `snap.completed` when the render succeeds and `snap.failed` when it fails. The body is JSON:
 
 ```json
 {
@@ -88,12 +88,10 @@ When an async snap is complete, the app sends one `POST` request to `webhook_url
 ```
 
 - The app tries the request a maximum of three times, with a short pause between the attempts.
-- If all three attempts fail, the app writes a warning to the log and puts the error in `last_error` of the snap.
-- The request has no signature header.
-- A failed render sends no webhook.
+- If all three attempts fail for a completed snap, the app writes a warning to the log and puts the error code in `last_error` of the snap.
+- A failed render sends `snap.failed`. The snap has `status: failed`, `last_error: render_failed` and an empty `media_url`. If the delivery of `snap.failed` fails, `last_error` keeps `render_failed`.
+- Each request carries the headers `X-Snapsbrew-Delivery`, `X-Snapsbrew-Timestamp` and `X-Snapsbrew-Signature`. Check the signature with the webhook signing secret of your company. Read [Webhooks](../api/overview.md#webhooks).
 - `webhook_url` must be a public `http` or `https` address. A host that resolves to a private, loopback, link-local or reserved range gets a `422` error.
-
-TODO(owner): A failed async render sends no webhook, so the receiver waits with no answer. Is this intended?
 
 ## Idempotency keys
 

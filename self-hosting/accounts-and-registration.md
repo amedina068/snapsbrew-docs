@@ -39,9 +39,17 @@ php artisan snapsbrew:install --promote=person@example.com
 
 With Docker, add `docker compose exec web` before the command. The command sets the owner flag and creates no account.
 
-An instance can have more than one owner. `--promote` adds the owner flag to the user. It does not remove the flag from the current owner. No command and no page removes the owner flag.
+An instance can have more than one owner. `--promote` adds the owner flag to the user. It does not remove the flag from the current owner.
 
-TODO(owner): Do we add a way to remove the owner flag from a user?
+## Remove the owner flag
+
+To remove the owner flag from a user, run:
+
+```bash
+php artisan snapsbrew:install --demote=person@example.com
+```
+
+The command refuses to demote the last owner, because an instance with no owner has nobody who can open `/admin` and `/horizon`. To hand over the instance, promote the new owner first, then demote the old owner. The command also refuses an email that no user has and a user who is not an owner.
 
 ## Registration modes
 
@@ -79,7 +87,7 @@ Only the owner can open `/admin`. Every other visitor, a guest included, gets a 
 
 | Page | What it does |
 |---|---|
-| **Admin > Users** (`/admin/users`) | Lists every account of the instance, with a search by name or email. Deactivates and reactivates users. |
+| **Admin > Users** (`/admin/users`) | Lists every account of the instance, with a search by name or email. Deactivates, reactivates and deletes users. |
 | **Admin > Settings** (`/admin/settings`) | Sets the registration mode. |
 
 ## Deactivate a user
@@ -90,14 +98,32 @@ The owner can deactivate a user in **Admin > Users**. A deactivated user keeps a
 - An open web session ends at the next request.
 - The API tokens of the user stop working.
 - The OAuth tokens of the MCP server stop working.
-- The signed URLs of the user show the placeholder image.
+- The signed URL keys of the user stop working. The signed URLs of the templates that the user created show the placeholder image.
 - The embedded forms of the user return 404.
 
 To restore access, click **Reactivate**. The tokens, the signed URLs and the forms of the user work again.
 
 The owner cannot deactivate an owner. The request returns 403.
 
-TODO(owner): Is there a way to delete a user and the data of the user? The admin area has deactivation only.
+## Delete a user
+
+Use a delete for a privacy request. Deactivation keeps the data, and a delete removes it. You cannot undo a delete.
+
+1. Open **Admin > Users**.
+2. Click **Delete** on the row of the user.
+3. Confirm in the browser dialog.
+
+The delete removes:
+
+- The account, the profile image and the database sessions of the user.
+- The API tokens, the signed URL keys and the OAuth tokens of the user.
+- The usage log rows of the user. These rows hold the IP address of each request.
+- The activity log rows that the user caused.
+- The screenshots of the user.
+
+The templates, snaps, forms and collections belong to the company. They stay while the company has another member. If the user is the last member of the company, the delete also removes the company and all of its content: templates, snaps, collections, forms, imports, fonts, tags and keys.
+
+The owner cannot delete an owner. The request returns 403. To delete an owner, remove the owner flag first. Read [Remove the owner flag](#remove-the-owner-flag).
 
 ## Two-factor authentication
 

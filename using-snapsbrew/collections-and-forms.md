@@ -34,9 +34,21 @@ A collection has two uses:
 
 A template that is already in the collection stays in the collection one time.
 
-The web app has no action that removes a template from a collection or deletes a collection.
+### Remove a template from a collection
 
-TODO(owner): The web app has no route to remove a template from a collection or to delete a collection. Is this intended?
+1. Open the collection.
+2. On the card of the template, click **Remove from collection**.
+3. Confirm in the browser dialog.
+
+The template stays in your templates. Only the link to the collection goes.
+
+### Delete a collection
+
+1. Open the collection.
+2. Click **Delete collection**.
+3. Confirm in the browser dialog.
+
+A delete also removes the forms of the collection, because a collection form renders every template of the collection. The templates stay. You cannot undo a delete.
 
 ### Find a collection
 

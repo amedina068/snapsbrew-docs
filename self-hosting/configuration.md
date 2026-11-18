@@ -99,6 +99,7 @@ In the prefixes, `<app name>` is `APP_NAME` in lowercase, with `_` between the w
 | `HORIZON_NAME` | none | commented out | A name that Horizon shows in its notifications. |
 | `HORIZON_DOMAIN` | none | commented out | A separate domain for the Horizon dashboard. |
 | `HORIZON_PATH` | `horizon` | `horizon` | The path of the Horizon dashboard. |
+| `HORIZON_MAX_PROCESSES` | 10 in `production`, 3 in `local` | commented out | The number of Horizon workers. Keep it in line with the `CONCURRENT` value of Browserless. |
 
 Read [Queues and Horizon](queues-and-horizon.md).
 
@@ -146,7 +147,7 @@ The variables of each bucket type are in [Storage](storage.md): `AWS_*` for `s3`
 | `RENDER_DRIVER` | `browsershot` | `browsershot` | `browserless` or `browsershot`. Docker sets `browserless`. |
 | `BROWSERLESS_URL` | none | empty | The URL of the Browserless service. Docker sets `http://browserless:3000`. |
 | `BROWSERLESS_TOKEN` | none | empty | The Browserless token. Docker requires it. |
-| `BROWSERLESS_TIMEOUT` | `60` | `60` | The timeout of one Browserless request, in seconds. |
+| `BROWSERLESS_TIMEOUT` | `15` | `15` | The timeout of one Browserless request, in seconds. The app tries 3 times, and 3 attempts must fit in the Horizon job timeout of 60 seconds. |
 | `BROWSERSHOT_NODE_PATH` | `/usr/local/bin/node` | commented out | The Node binary for Browsershot. |
 | `BROWSERSHOT_NPM_PATH` | `/usr/local/bin/npm` | commented out | The npm binary for Browsershot. |
 | `BROWSERSHOT_INSTANCE` | empty | empty | A remote Chrome as `host:port` for Browsershot. Empty starts a local Chrome. |

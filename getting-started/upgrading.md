@@ -114,4 +114,4 @@ Some commands repair or copy data that older versions stored. Run them only when
 
 No migration fills the v2 editor documents, and an upgrade does not need them. A render reads the layers of the template, not the v2 document.
 
-CAUTION: Do not run `php artisan editor:backfill-template-documents` unless a release note tells you to. After the command fills the v2 document of a template, the browser editor cannot save that template.
+CAUTION: Do not run `php artisan editor:backfill-template-documents` unless a release note tells you to. After the command fills the v2 document of a template, the browser editor cannot save that template. The editor shows a message when you click **Save**.

@@ -22,9 +22,9 @@ The key is a Sanctum token with the `signed_url` ability. It cannot call the RES
 
 You can keep more than one key active. This lets you change keys with no downtime.
 
-The key must belong to the user who created the template. The app looks for the key only in the active keys of that user.
+The key must belong to an active user of the company that owns the template. Any user of the company can sign a URL for any template of the company. The key of a deactivated user does not work.
 
-TODO(owner): The key must belong to the user who created the template, not to any user of the company. Is this intended? A template made by another user of the company does not accept your key.
+The usage log row and the snap name the user whose key signed the URL.
 
 ## The URL
 
@@ -163,7 +163,7 @@ The endpoint does not return an error for most problems. It returns a neutral pl
 - The template does not exist.
 - The user who created the template is deactivated.
 - The `signature` parameter is missing.
-- No active key of the template creator matches the signature.
+- No active key of the template company matches the signature.
 
 A placeholder is the sign of a bad signature, a revoked key or a wrong template id.
 

@@ -18,10 +18,10 @@ The signed URL route renders a snap from the query string of a URL. Your server 
 GET /signed-url/image.jpg
 ```
 
-- **Auth:** the `signature` in the URL, made with a signed-URL key of the template owner
+- **Auth:** the `signature` in the URL, made with a signed-URL key of an active user of the template company
 - **Ability:** `signed_url`, on the token of the signed-URL key
 - **Rate limit:** `signed-url`: 600 requests a minute for one IP address
-- **Usage log:** yes, on the account of the template owner, for each render
+- **Usage log:** yes, on the account of the user whose key signed the URL, for each render
 
 The route is on the root of the instance, not under `/api`. The full URL is `https://snapsbrew.example/signed-url/image.jpg`.
 
@@ -62,11 +62,11 @@ Location: https://snapsbrew.example/storage/snaps/9f1c2d3e.png
 
 | Status | Cause |
 |---|---|
-| `200` | The route returns a placeholder PNG image. This occurs when the signature is missing, when no active key of the template owner matches the signature, when the template does not exist, or when the owner is deactivated. |
+| `200` | The route returns a placeholder PNG image. This occurs when the signature is missing, when no active key of the template company matches the signature, when the template does not exist, or when the user who created the template is deactivated. |
 | `302` | The image rendered, or a cached image exists. |
 | `400` | The decoded `variants` fail the variant rules, the URL has `format=jpeg` with `transparent`, or the URL has a reserved parameter. |
 | `429` | The `signed-url` limit for the IP address is full. Wait for the number of seconds in `Retry-After`. |
 
-A bad signature does not return an error status. If you get the placeholder image, make sure that the key belongs to the template owner. Also make sure that the key is active.
+A bad signature does not return an error status. If you get the placeholder image, make sure that the key belongs to an active user of the template company. Also make sure that the key is active.
 
 The `400` messages are `Invalid variants payload.`, `Transparency is not supported for the JPEG format.` and `The signed URL has a reserved parameter.`
