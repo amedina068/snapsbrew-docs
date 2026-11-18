@@ -23,14 +23,14 @@ The app sends a `POST` request to `/screenshot` or `/pdf` on `BROWSERLESS_URL`. 
 RENDER_DRIVER=browserless
 BROWSERLESS_URL=http://browserless:3000
 BROWSERLESS_TOKEN=<token>
-BROWSERLESS_TIMEOUT=60
+BROWSERLESS_TIMEOUT=15
 ```
 
 | Variable | What it does |
 |---|---|
 | `BROWSERLESS_URL` | The base URL of the service. In Docker it is `http://browserless:3000`. If the app runs on the same host outside Docker, use `http://127.0.0.1:3000`. |
 | `BROWSERLESS_TOKEN` | The token. The app adds it to each request. |
-| `BROWSERLESS_TIMEOUT` | The timeout of one request, in seconds. Default `60`. |
+| `BROWSERLESS_TIMEOUT` | The timeout of one request, in seconds. Default `15`. Read [Timeouts and queues](#timeouts-and-queues) before you change it. |
 
 ### Retries
 
@@ -56,7 +56,7 @@ These variables belong to the Browserless container, not to the app:
 |---|---|---|---|
 | `CONCURRENT` | 5 | 10 | The number of renders at the same time. Keep it in line with the Horizon worker count. |
 | `QUEUED` | 20 | 20 | The number of requests that wait for a free slot. |
-| `TIMEOUT` | 60000 | 60000 | The limit of one render, in milliseconds. Keep it in line with `BROWSERLESS_TIMEOUT` of the app (in seconds). |
+| `TIMEOUT` | 15000 | 15000 | The limit of one render, in milliseconds. Keep it equal to `BROWSERLESS_TIMEOUT` of the app (in seconds). |
 | `MAX_MEMORY_PERCENT` | not set | 80 | Browserless starts Chrome again above this memory use. |
 | `MAX_CPU_PERCENT` | not set | 90 | The CPU limit of Browserless. |
 
@@ -118,8 +118,11 @@ A self-signed certificate on the media URL has the same effect. Chrome in Browse
 - A sync render runs in the web request. The request waits until the renderer returns.
 - An async render runs as a `ProcessSnap` job on the `renders` queue. Read [Queues and Horizon](queues-and-horizon.md).
 - The Horizon supervisor has a job timeout of 60 seconds and 1 try.
+- The Browserless renderer tries a render 3 times. Each attempt waits `BROWSERLESS_TIMEOUT` seconds, and the pause between attempts is 0.2 and then 0.4 seconds.
 
-TODO(owner): A Browserless render can take 3 attempts of `BROWSERLESS_TIMEOUT` (60 seconds each), but the Horizon job timeout is 60 seconds. Which limit do you want self-hosters to tune?
+Tune `BROWSERLESS_TIMEOUT` only. The default of 15 seconds puts the worst case at about 46 seconds, so the third attempt runs before Horizon stops the job at 60 seconds. A sync render in a web request also stays short.
+
+If you raise `BROWSERLESS_TIMEOUT` above 19 seconds, the third attempt does not run before Horizon stops the job. Keep the `TIMEOUT` of the Browserless container equal to `BROWSERLESS_TIMEOUT`, in milliseconds.
 
 ## Output formats
 

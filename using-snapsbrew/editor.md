@@ -110,4 +110,4 @@ Read [Editor documents API](../api/editor-documents.md).
 
 The browser editor reads and saves only the layers and the groups of the template. It does not write the v2 editor document. It reads the preflight result of the document and shows the problems that the preflight finds.
 
-If a template has a v2 editor document, the browser editor cannot save it. The save request returns `409` with `legacy_edit_rejected_for_v2`. Change such a template with the API or the MCP server.
+If a template has a v2 editor document, the browser editor cannot save it. The save request returns `409` with `legacy_edit_rejected_for_v2`, and the editor shows a message under the **Save** button. The message says that your changes are not saved. Change such a template with the API or the MCP server.

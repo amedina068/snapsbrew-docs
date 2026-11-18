@@ -33,9 +33,9 @@ Add one cron entry for the user that runs the app:
 * * * * * cd /var/www/snapsbrew && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-Use only one scheduler for each instance. "Never two at the same time" uses a cache lock. If you run the app on more than one server, all servers must share the same cache store, for example Redis.
+Use only one scheduler for each instance. "Never two at the same time" uses a cache lock.
 
-TODO(owner): Do you want to add `onOneServer()` to the scheduled commands for instances with more than one app server?
+The commands that never run two at the same time also run on one server only (`onOneServer()`). If you run the app on more than one server, each server can run `schedule:run`. Then all servers must share the same cache store, for example `CACHE_DRIVER=redis`. With a file cache on each server, each server takes its own lock and runs its own copy.
 
 ## Commands that do not run on a timer
 

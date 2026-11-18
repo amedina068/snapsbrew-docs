@@ -162,7 +162,7 @@ A `500` body gives no detail of the cause. The instance writes the cause to its 
 
 ### Webhook
 
-When an async snap completes, the instance posts `{"event": "snap.completed", "snap": {...}}` to `webhook_url`. A failed snap posts no webhook. See [Webhooks](overview.md#webhooks).
+When an async snap finishes, the instance posts `{"event": "snap.completed", "snap": {...}}` to `webhook_url`. A failed render posts `snap.failed`, and the snap has `last_error: render_failed`. See [Webhooks](overview.md#webhooks).
 
 ## Examples
 
@@ -217,14 +217,23 @@ A webhook receiver in Laravel:
 use Illuminate\Http\Request;
 
 Route::post('/hooks/snap', function (Request $request) {
+    $timestamp = (string) $request->header('X-Snapsbrew-Timestamp');
+    $expected = hash_hmac('sha256', $timestamp.'.'.$request->getContent(), config('services.snapsbrew.webhook_secret'));
+
+    abort_unless(hash_equals($expected, (string) $request->header('X-Snapsbrew-Signature')), 401);
+    abort_if(abs(time() - (int) $timestamp) > 300, 401);
+
     if ($request->input('event') === 'snap.completed') {
-        $snapId = $request->input('snap.id');
         $url = $request->input('snap.media_url');
         // Store the URL.
+    }
+
+    if ($request->input('event') === 'snap.failed') {
+        // Mark your job as failed. snap.last_error is "render_failed".
     }
 
     return response()->noContent();
 });
 ```
 
-The webhook carries no signature. Put a secret value in the path or the query of `webhook_url`, and make sure that the receiver compares it.
+The receiver checks the signature with the webhook signing secret of your company. **Account > Developers** shows the secret. Read [Verify the signature](overview.md#verify-the-signature).

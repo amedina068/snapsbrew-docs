@@ -131,7 +131,7 @@ The Browserless port is not published. The token is the only protection of Brows
 | `RENDER_DRIVER` | `browserless` |
 | `BROWSERLESS_URL` | `http://browserless:3000` |
 
-The Browserless container has these limits: `CONCURRENT` is 5, `QUEUED` is 20 and `TIMEOUT` is 60000 milliseconds.
+The Browserless container has these limits: `CONCURRENT` is 5, `QUEUED` is 20 and `TIMEOUT` is 15000 milliseconds.
 
 ## Known limit: images on the instance
 

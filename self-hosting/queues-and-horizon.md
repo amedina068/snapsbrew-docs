@@ -49,7 +49,7 @@ php artisan horizon:terminate
 | Connection | `redis` |
 | Queues | `renders`, `imports`, `mail`, `default` |
 | Balance | `auto`, with the `time` strategy |
-| Maximum processes | 10 when `APP_ENV` is `production`, 3 when `APP_ENV` is `local` |
+| Maximum processes | `HORIZON_MAX_PROCESSES`. If it is empty, 10 when `APP_ENV` is `production` and 3 when `APP_ENV` is `local`. |
 | Memory | 128 MB for each worker |
 | Tries | 1 |
 | Timeout | 60 seconds |
@@ -60,7 +60,11 @@ Keep the maximum process count in line with the `CONCURRENT` value of Browserles
 
 The items of a creative package are an exception to the supervisor values. Each item job sets its own tries (3) and timeout (120 seconds). Read [Creative packages](../using-snapsbrew/creative-packages.md).
 
-TODO(owner): Do you want a supported way to change the Horizon process count without an edit of `config/horizon.php`, for example an environment variable?
+### Change the worker count
+
+Set `HORIZON_MAX_PROCESSES` in `.env`, for example `HORIZON_MAX_PROCESSES=6`. Then stop Horizon with `php artisan horizon:terminate`, so that the process manager starts it with the new value. You do not edit `config/horizon.php`.
+
+The one supervisor reads all four queues, `renders` first. So the variable sets the number of workers for renders and for the other queues together.
 
 ## The Horizon dashboard
 

@@ -104,7 +104,34 @@ The files of a creative package are an exception. The app serves them through si
 
 `MEDIA_DISK` applies to new files. The media library keeps the disk name of each file in the `media` table, so the old files stay on the old disk.
 
-TODO(owner): Is there a supported way to move the existing media from `public` to a bucket? If not, must an owner copy the files and update the `media.disk` column by hand?
+The app has no command that moves the existing files. To move them to a bucket, copy the files, then change the disk name of each row in the `media` table.
+
+The media library keeps each file under the ID of its `media` row: `<id>/<file name>`. The conversions are in `<id>/conversions/`, and the responsive images are in `<id>/responsive-images/`. On the `public` disk, the root is `storage/app/public`.
+
+This example moves the files from `public` to `s3`. Make a backup of the database and of `storage/app/public` before you start.
+
+1. Set the bucket variables and `MEDIA_DISK=s3` in `.env`. Read the section of your bucket on this page.
+2. Stop Horizon and the scheduler, so that no job writes a new file during the copy.
+3. Copy the folder tree to the root of the bucket. Keep the paths as they are:
+
+   ```bash
+   aws s3 sync storage/app/public/ s3://<bucket>/ --acl public-read
+   ```
+
+4. Change the disk of the rows:
+
+   ```sql
+   UPDATE media SET disk = 's3' WHERE disk = 'public';
+   UPDATE media SET conversions_disk = 's3' WHERE conversions_disk = 'public';
+   ```
+
+5. Clear the configuration cache with `php artisan config:clear`.
+6. Start Horizon and the scheduler again.
+7. Open a template, a snap and a screenshot, and make sure that each image loads from the bucket.
+
+When all images load, you can remove the old files from `storage/app/public`. Keep the `storage` link, because other files can use it.
+
+For `spaces` or `r2`, use the same steps with the disk name `spaces` or `r2` and the copy tool of your provider.
 
 ## Image conversions
 

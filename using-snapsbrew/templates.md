@@ -126,9 +126,20 @@ Read [Tags API](../api/tags.md).
 
 ## Delete a template
 
-The web app has no delete action for a template. Use `DELETE /v1/templates/{uuid}`. Read [Templates API](../api/templates.md).
+1. Open the template page.
+2. Click **Delete template**.
+3. Confirm the delete in the browser dialog.
 
-TODO(owner): The web app has no route to delete a template. Is this intended, or is a delete action missing in the UI?
+The API does the same with `DELETE /v1/templates/{uuid}`. Read [Templates API](../api/templates.md).
+
+A delete also removes:
+
+- The snaps of the template and their images.
+- The versions of the template.
+- The forms of the template.
+- The link to each collection that holds the template. The collections stay.
+
+The imports of the template stay as a record. You cannot undo a delete.
 
 ## Related pages
 

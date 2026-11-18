@@ -74,10 +74,11 @@ The app selects the change from the properties of the layer:
 |---|---|
 | `textContent` | `text` |
 | `qrContent` | `qr_content` |
+| `barcodeContent` | `barcode_content` |
 | `backgroundImage` | `image_url` |
 | `backgroundColor` | `background_color` |
 
-The app checks these properties in this order and uses the first match. A cell for a layer with none of these properties changes nothing.
+The app checks these properties in this order and uses the first match. A barcode layer also has a `backgroundColor`, so its cell changes the barcode value, not the color. The value must be valid for the format of the barcode, or the render of that row fails. A cell for a layer with none of these properties changes nothing.
 
 The import reads the layer keys of the version that renders. This is the published version, or the draft if the template has no published version. The spreadsheet that you download has the same columns.
 
@@ -137,9 +138,9 @@ The body is JSON:
 }
 ```
 
-A spreadsheet import also sends one `snap.completed` event for each snap. Read [Snaps](snaps.md#the-webhook) for that body. An API batch sends only the final event.
+A spreadsheet import also sends one `snap.completed` or `snap.failed` event for each snap. Read [Snaps](snaps.md#the-webhook) for that body. An API batch sends only the final event.
 
-The app tries each webhook request a maximum of three times. If all attempts fail, it writes a warning to the log. The request has no signature header.
+The app tries each webhook request a maximum of three times. If all attempts fail, it writes a warning to the log. Each request carries the signature headers. Read [Verify the signature](../api/overview.md#verify-the-signature).
 
 `webhook_url` must be a public `http` or `https` address with a maximum of 2048 characters.
 

@@ -232,11 +232,41 @@ An async snap and a batch can post a webhook when they finish.
 
 The `webhook_url` must be a public `http` or `https` address. If the host resolves to a private, loopback, link-local or reserved address, the request gets `422`.
 
-The instance posts JSON with `Http::post()`. It tries three times, with a short wait between the attempts. If all three attempts fail, the instance writes a warning to its log. The webhook request carries no signature.
+The instance posts JSON. It tries three times, with a short wait between the attempts. It does not follow a redirect. If all three attempts fail, the instance writes a warning to its log.
 
-TODO(owner): Do you want to sign webhook requests, so that a receiver can prove that the request came from the instance?
+### Verify the signature
 
-**Snap webhook.** The instance posts it after an async snap completes. A failed snap posts no webhook.
+The instance signs each webhook with the webhook signing secret of your company. Each request carries three headers:
+
+| Header | Value |
+|---|---|
+| `X-Snapsbrew-Delivery` | A UUID. All attempts of one delivery carry the same value, so you can ignore a duplicate. |
+| `X-Snapsbrew-Timestamp` | The time of the delivery, in Unix seconds. |
+| `X-Snapsbrew-Signature` | The lowercase hex HMAC-SHA256 of `{timestamp}.{body}`, with the secret as the key. |
+
+`{body}` is the raw request body, byte for byte. Do not decode and encode the JSON again before you check it.
+
+To check a request:
+
+1. Read the raw body and the three headers.
+2. Make the string `{X-Snapsbrew-Timestamp}.{body}`.
+3. Compute the HMAC-SHA256 of that string with your secret.
+4. Compare the result with `X-Snapsbrew-Signature` in constant time.
+5. Reject the request if the timestamp is more than five minutes old.
+
+```php
+use Illuminate\Http\Request;
+
+$timestamp = $request->header('X-Snapsbrew-Timestamp');
+$expected = hash_hmac('sha256', $timestamp.'.'.$request->getContent(), config('services.snapsbrew.webhook_secret'));
+
+abort_unless(hash_equals($expected, (string) $request->header('X-Snapsbrew-Signature')), 401);
+abort_if(abs(time() - (int) $timestamp) > 300, 401);
+```
+
+**Account > Developers > Webhook signing secret** shows the secret. **Rotate secret** replaces it at once. A receiver that checks the old secret rejects the next webhook, so give the new secret to your receivers right after a rotation.
+
+**Snap webhook.** The instance posts it when an async snap finishes. The `event` is `snap.completed` when the render succeeds and `snap.failed` when it fails.
 
 ```json
 {
@@ -250,6 +280,28 @@ TODO(owner): Do you want to sign webhook requests, so that a receiver can prove 
     "webhook_url": "https://example.com/hooks/snap",
     "completed_at": "2026-05-01T12:00:03Z",
     "last_error": null,
+    "variants": [],
+    "template_id": "141e8454-8aa1-420a-bd0b-18a85ba949a2",
+    "template_title": "Launch card",
+    "created_at": "2026-05-01T12:00:00Z"
+  }
+}
+```
+
+A failed snap has `status: failed`, `last_error: render_failed` and an empty `media_url`:
+
+```json
+{
+  "event": "snap.failed",
+  "snap": {
+    "id": "9f1c2d3e",
+    "media_url": "",
+    "type": "image",
+    "status": "failed",
+    "is_async": true,
+    "webhook_url": "https://example.com/hooks/snap",
+    "completed_at": "2026-05-01T12:00:03Z",
+    "last_error": "render_failed",
     "variants": [],
     "template_id": "141e8454-8aa1-420a-bd0b-18a85ba949a2",
     "template_title": "Launch card",

@@ -301,7 +301,7 @@ The request example is in [Examples](#examples).
 DELETE /v1/templates/{templateIdentifier}
 ```
 
-Deletes a template. The path accepts the UUID or the numeric ID.
+Deletes a template. The path accepts the UUID or the numeric ID. The delete also removes the snaps, the images, the versions and the forms of the template, and removes the template from its collections. You cannot undo it.
 
 ```bash
 curl -X DELETE https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b-18a85ba949a2 \
