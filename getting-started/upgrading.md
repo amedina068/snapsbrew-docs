@@ -10,7 +10,9 @@ An upgrade gets the new code, rebuilds the assets and runs the new migrations.
 
 CAUTION: Make a backup of the database and the storage before you upgrade. A migration can change data. Read [Backups](../self-hosting/backups.md).
 
-TODO(owner): Where do you publish the release notes and the breaking changes (GitHub releases, a CHANGELOG file, or the docs)? Which version do you tell people to use, a tag or `main`?
+Read the `CHANGELOG.md` file of the app repository before you upgrade. It lists the changes of each release, and the changes that are not released yet.
+
+TODO(owner): Which version do you tell people to use, a tag or `main`?
 
 ## Upgrade with Docker
 
@@ -110,4 +112,6 @@ Some commands repair or copy data that older versions stored. Run them only when
 | `php artisan editor:backfill-template-documents` | Copies old layer data into the v2 editor document columns. Options: `--table=templates` or `--table=template_versions`, `--after-id`, `--limit` (1 to 5000, default 500). |
 | `php artisan sb:remove-template-layers-title` | Removes the `title` field from the stored layers of each template. |
 
-TODO(owner): Must a self-hosted instance run `php artisan editor:backfill-template-documents` after an upgrade, or does a migration do this work?
+No migration fills the v2 editor documents, and an upgrade does not need them. A render reads the layers of the template, not the v2 document.
+
+CAUTION: Do not run `php artisan editor:backfill-template-documents` unless a release note tells you to. After the command fills the v2 document of a template, the browser editor cannot save that template.

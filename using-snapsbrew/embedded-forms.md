@@ -84,7 +84,7 @@ $snap = $response->json('data');
 
 The submit URL has its own signature. The app stores it as `submit_signed_url` on the form. The hosted page signs it again for the host that serves the page.
 
-TODO(owner): The form pages show only the form link. Where does a user get the `submit_signed_url` to build a custom UI?
+The form page shows this URL under **Submit link**. Copy it from there.
 
 ### Layer keys
 

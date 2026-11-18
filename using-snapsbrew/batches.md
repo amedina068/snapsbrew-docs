@@ -79,7 +79,7 @@ The app selects the change from the properties of the layer:
 
 The app checks these properties in this order and uses the first match. A cell for a layer with none of these properties changes nothing.
 
-TODO(owner): The import reads the layer keys from the draft, but the snaps render the published version. If the two have different keys, which one wins?
+The import reads the layer keys of the version that renders. This is the published version, or the draft if the template has no published version. The spreadsheet that you download has the same columns.
 
 ### Start the import
 

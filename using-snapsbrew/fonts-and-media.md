@@ -20,13 +20,11 @@ A custom font belongs to the company. All users of the company can use it.
 
 ### Upload a font
 
-1. Open the **Custom fonts** page at `/fonts`.
+1. In the top menu, click **Fonts**. The **Custom fonts** page opens.
 2. Type a **Display name**.
 3. Type the **CSS family name**.
 4. Select the **Font file**.
 5. Click **Upload font**.
-
-TODO(owner): The top menu has no link to `/fonts`. Where does a user find the **Custom fonts** page?
 
 The upload has these rules:
 

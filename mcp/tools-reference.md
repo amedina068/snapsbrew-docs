@@ -111,12 +111,13 @@ This tool takes no arguments.
 | Argument | Type | Required | Values | Description |
 | --- | --- | --- | --- | --- |
 | `template_id` | string | Yes |  | UUID of the template to preview. |
-| `variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
+| `variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), "barcode_content" (string, valid for the barcode symbology), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
 | `variants[].layer` | string | Yes |  | Layer key to override. |
 | `variants[].text` | string | No |  | Replacement text for a text layer. |
 | `variants[].image_url` | string | No |  | Public image URL for an image layer. |
 | `variants[].background_color` | string | No |  | Background color as #hex. |
 | `variants[].qr_content` | string | No |  | Content for a QR-code layer. |
+| `variants[].barcode_content` | string | No |  | Value for a barcode layer. It must be valid for the barcode symbology of the layer, for example 12 or 13 digits for EAN-13. |
 | `variants[].hidden` | boolean | No |  | Set true to hide the layer. |
 
 ## preview-snap
@@ -128,12 +129,13 @@ This tool takes no arguments.
 | Argument | Type | Required | Values | Description |
 | --- | --- | --- | --- | --- |
 | `template_id` | string | Yes |  | UUID of the template to render the snap from. |
-| `variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
+| `variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), "barcode_content" (string, valid for the barcode symbology), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
 | `variants[].layer` | string | Yes |  | Layer key to override. |
 | `variants[].text` | string | No |  | Replacement text for a text layer. |
 | `variants[].image_url` | string | No |  | Public image URL for an image layer. |
 | `variants[].background_color` | string | No |  | Background color as #hex. |
 | `variants[].qr_content` | string | No |  | Content for a QR-code layer. |
+| `variants[].barcode_content` | string | No |  | Value for a barcode layer. It must be valid for the barcode symbology of the layer, for example 12 or 13 digits for EAN-13. |
 | `variants[].hidden` | boolean | No |  | Set true to hide the layer. |
 
 ## preview-design
@@ -162,12 +164,13 @@ This tool takes no arguments.
 | `format` | string | No | `png`, `jpeg`, `webp` | Image output format (image type only). Defaults to png. Transparency requires png or webp. |
 | `transparent` | boolean | No |  | Render on a transparent background (png/webp only). Defaults to false. |
 | `idempotency_key` | string | No |  | Optional. Send the same key when you retry after a timeout. The retry returns the same snap and does not render it again. Keys are honored for 24 hours, are scoped to your account, and accept letters, digits, underscores and hyphens, up to 191 characters. |
-| `variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
+| `variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), "barcode_content" (string, valid for the barcode symbology), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
 | `variants[].layer` | string | Yes |  | Layer key to override. |
 | `variants[].text` | string | No |  | Replacement text for a text layer. |
 | `variants[].image_url` | string | No |  | Public image URL for an image layer. |
 | `variants[].background_color` | string | No |  | Background color as #hex. |
 | `variants[].qr_content` | string | No |  | Content for a QR-code layer. |
+| `variants[].barcode_content` | string | No |  | Value for a barcode layer. It must be valid for the barcode symbology of the layer, for example 12 or 13 digits for EAN-13. |
 | `variants[].hidden` | boolean | No |  | Set true to hide the layer. |
 
 ## create-snap-from-design
@@ -198,12 +201,13 @@ This tool takes no arguments.
 | `template_id` | string | Yes |  | UUID of the template every item renders from. |
 | `items` | array of object | Yes |  | One entry per snap, at most 100. Each entry carries its own "variants" and an optional "identifier" you use to recognize it in the result. |
 | `items[].identifier` | string | No |  | Your own name for this item. Defaults to item_1, item_2, and so on. |
-| `items[].variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
+| `items[].variants` | array of object | No |  | Per-layer overrides. Each item is an object with a "layer" key (a layer key from get-template-details) plus exactly one of: "text" (string), "image_url" (public https URL), "background_color" (#hex), "qr_content" (string), "barcode_content" (string, valid for the barcode symbology), or "hidden" (true to drop the layer). Example: [{"layer":"headline","text":"Hello"},{"layer":"logo","image_url":"https://cdn.example.com/logo.png"}] |
 | `items[].variants[].layer` | string | Yes |  | Layer key to override. |
 | `items[].variants[].text` | string | No |  | Replacement text for a text layer. |
 | `items[].variants[].image_url` | string | No |  | Public image URL for an image layer. |
 | `items[].variants[].background_color` | string | No |  | Background color as #hex. |
 | `items[].variants[].qr_content` | string | No |  | Content for a QR-code layer. |
+| `items[].variants[].barcode_content` | string | No |  | Value for a barcode layer. It must be valid for the barcode symbology of the layer, for example 12 or 13 digits for EAN-13. |
 | `items[].variants[].hidden` | boolean | No |  | Set true to hide the layer. |
 | `title` | string | No |  | A name for this batch, shown in the account. Defaults to "MCP batch". |
 | `webhook_url` | string | No |  | Optional public https URL. ONE request is posted to it when the batch finishes. The address must be public: a private, loopback or link-local host is rejected. |

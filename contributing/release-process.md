@@ -8,11 +8,27 @@ order: 5
 
 This page lists the parts of a release that the code defines. The app repository does not define a full release procedure yet. The `TODO(owner):` lines are the open questions.
 
-TODO(owner): Do we tag releases in git? If yes, what is the tag format, and which branch do we tag?
+## Tags and the Docker image
 
-TODO(owner): Do we keep a changelog or GitHub release notes? Where?
+A release is a git tag that starts with `v` and holds a semantic version, for example `v1.2.3`. A push of such a tag starts the `Docker image` workflow in `.github/workflows/docker-publish.yml`. The workflow does not read the branch of the tagged commit.
 
-TODO(owner): Do we publish a Docker image to a registry, or does each instance build the image from the source with `docker compose up -d --build`?
+TODO(owner): Which branch do we tag?
+
+The workflow builds the image for `linux/amd64` and `linux/arm64`. It pushes the image to the GitHub Container Registry as `ghcr.io/<owner>/snapsbrew`. The workflow sets these image tags:
+
+| Git tag | Image tags |
+| --- | --- |
+| `v0.4.1` | `0.4.1`, `0.4`, `latest` |
+| `v1.2.3` | `1.2.3`, `1.2`, `1`, `latest` |
+| `v1.3.0-rc.1` | `1.3.0-rc.1` only. `latest` stays on the last stable release. |
+
+A manual run of the workflow publishes the selected branch or tag. It gives the image tags `<branch>` and `sha-<commit>`.
+
+`docker-compose.image.yml` runs the published image. An instance can also build the image from the source with `docker compose up -d --build`.
+
+## The changelog
+
+The app repository keeps `CHANGELOG.md`. The file uses the Keep a Changelog format and Semantic Versioning. Each change goes under `[Unreleased]` until the release.
 
 ## Version numbers
 
@@ -67,7 +83,9 @@ php artisan editor:backfill-template-documents
 
 It fills the empty v2 documents from the legacy template data. Its options are `--table` (`templates` or `template_versions`), `--after-id` and `--limit` (default `500`).
 
-TODO(owner): Must an instance run `php artisan editor:backfill-template-documents` after an update? If yes, in which release, and do we document it in the upgrade notes?
+No migration fills the v2 documents, and a render does not need them. A template with no v2 document renders from `layers` and `groups`. The editor operations return `editor_operation_document_missing` for a template with no v2 document.
+
+CAUTION: Do not tell instances to run the backfill while the browser editor saves only `layers` and `groups`. The command sets `editor_schema_version`, and then `PATCH /api/v1/templates/{uuid}` returns `409` with `legacy_edit_rejected_for_v2`. The browser editor cannot save these templates.
 
 ## Before a release
 

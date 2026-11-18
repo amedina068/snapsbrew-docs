@@ -153,8 +153,15 @@ The request went over a rate limit. Wait for the time in the `Retry-After` heade
 
 `MCP_ENABLED` is `false`. Set it to `true` and restart the app.
 
-### The OAuth connection of an MCP client fails at the consent step
+### The OAuth registration of an MCP client fails
 
-The redirect host of the client is not in `MCP_REDIRECT_DOMAINS`. Add the scheme and the host of the client, or use an API token. Read [OAuth](../mcp/oauth.md).
+The redirect host of the client is not in `MCP_REDIRECT_DOMAINS`. The client stops at the registration step and never shows the consent screen. `POST /oauth/register` returns `400`. If the first redirect URI is the wrong one, the body is:
 
-TODO(owner): Which error does a client see when its redirect host is not in `MCP_REDIRECT_DOMAINS`? Add the exact message here.
+```json
+{
+  "error": "invalid_redirect_uri",
+  "error_description": "redirect_uris.0 is not a permitted redirect domain."
+}
+```
+
+Add the scheme and the host of the client to `MCP_REDIRECT_DOMAINS`, or use an API token. Read [OAuth](../mcp/oauth.md).

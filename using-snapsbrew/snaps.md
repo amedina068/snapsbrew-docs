@@ -116,12 +116,6 @@ The scheduler runs `php artisan snaps:prune-idempotency-keys` every hour to dele
 - The page of one snap is at `/snapshots/{uuid}`.
 - You can delete one snap, or select many snaps and delete them together.
 
-## The snap HTML page
-
-`GET /snaps/{snapId}` shows the HTML of a snap from its numeric id. This route has no authentication.
-
-TODO(owner): What uses the public route `GET /snaps/{snapId}`? It shows snap HTML by numeric id with no authentication. Is it still needed?
-
 ## Clean up failed signed-URL snaps
 
 An old version of the app kept a snap row with no image after a failed signed-URL render. This command finds these rows:

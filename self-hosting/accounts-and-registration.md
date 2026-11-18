@@ -39,7 +39,9 @@ php artisan snapsbrew:install --promote=person@example.com
 
 With Docker, add `docker compose exec web` before the command. The command sets the owner flag and creates no account.
 
-TODO(owner): Can an instance have more than one owner, and how does an owner remove the owner flag from a user? The code has `--promote` but no command to remove the flag.
+An instance can have more than one owner. `--promote` adds the owner flag to the user. It does not remove the flag from the current owner. No command and no page removes the owner flag.
+
+TODO(owner): Do we add a way to remove the owner flag from a user?
 
 ## Registration modes
 

@@ -108,4 +108,6 @@ The API and the MCP server can also change a template through the v2 editor docu
 
 Read [Editor documents API](../api/editor-documents.md).
 
-TODO(owner): Does the browser editor read and write the v2 editor document, or only the `layers` and `groups` fields? The save code sends `layers` and `groups` to `PATCH /api/v1/templates/{uuid}`.
+The browser editor reads and saves only the layers and the groups of the template. It does not write the v2 editor document. It reads the preflight result of the document and shows the problems that the preflight finds.
+
+If a template has a v2 editor document, the browser editor cannot save it. The save request returns `409` with `legacy_edit_rejected_for_v2`. Change such a template with the API or the MCP server.

@@ -112,11 +112,11 @@ Captures the page during the request. The response comes back when the image is 
 
 | Field | Type | Required | Rules | Description |
 |---|---|---|---|---|
-| `url` | string | No | A public `http` or `https` URL | The page to capture. |
+| `url` | string | Yes | A public `http` or `https` URL | The page to capture. |
 | `width` | integer | No | 1 to 4000 | The viewport width. The default is 1330. |
 | `height` | integer | No | 1 to 4000 | The viewport height. The default is 780. |
 
-TODO(owner): `url` is not required in `ScreenshotController::store()`. What does the instance do with a request that has no `url`?
+A request with no `url` returns `422` with an error on `url`. The instance stores no screenshot.
 
 The host of `url` must resolve to global addresses only. The scheme, host and port of `APP_URL` are also accepted. A private, loopback, link-local, shared, NAT64, 6to4 or reserved address returns `422`.
 

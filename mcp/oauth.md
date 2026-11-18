@@ -131,7 +131,19 @@ php artisan passport:keys
 
 CAUTION: Keep the private key secret. If you change the key pair, the instance cannot read the tokens that it signed with the old keys.
 
-TODO(owner): After a key change, must each connector connect again? Do we document a key rotation procedure?
+A change of the key pair has these results:
+
+- The instance refuses every access token that it signed with the old private key.
+- The refresh tokens stay valid. The instance encrypts them with `APP_KEY`, not with the key pair.
+- A connector that uses its refresh token gets a new access token and keeps the connection.
+- A connector that does not use a refresh token must connect again.
+
+A change of `APP_KEY` makes every refresh token and every pending authorization code invalid. Then each connector must connect again.
+
+To change the key pair:
+
+1. Run `php artisan passport:keys --force`. If the instance reads `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY`, set the new keys in these variables instead.
+2. Restart the app and the Horizon workers.
 
 ## Authorization server
 
@@ -145,7 +157,11 @@ The Passport guard finds a user through a provider that does not return a deacti
 
 The consent screen tells the person that they can end the connection from the account page.
 
-TODO(owner): The account page has no list of OAuth connections and no revoke action. How does a person end an OAuth connection? Do we add this feature, or change the text of the consent screen?
+1. Open **Account > Developers**.
+2. In **OAuth connections**, find the application. Each row shows the name of the application, the date of the connection and the time of the last token.
+3. Click **Revoke**.
+
+Revoke ends the access tokens, the refresh tokens and the pending authorization codes of the person for that application. To use the application again, the person must connect again.
 
 ## Related pages
 

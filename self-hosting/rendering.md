@@ -83,7 +83,7 @@ BROWSERSHOT_INSTANCE=
 
 `npm install` downloads a Chrome through Puppeteer. If Puppeteer did not download a Chrome, set the Puppeteer variable `PUPPETEER_EXECUTABLE_PATH` to the path of a local Chrome.
 
-TODO(owner): `BrowsershotRenderer::pdfBase64()` does not set the Node path, the npm path or `BROWSERSHOT_INSTANCE`. Is this intended for PDF renders?
+Image renders, PDF renders and screenshots use these three variables.
 
 ## Fonts
 
