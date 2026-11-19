@@ -10,7 +10,7 @@ An upgrade gets the new code, rebuilds the assets and runs the new migrations.
 
 CAUTION: Make a backup of the database and the storage before you upgrade. A migration can change data. Read [Backups](../self-hosting/backups.md).
 
-Read the `CHANGELOG.md` file of the app repository before you upgrade. It lists the changes of each release, and the changes that are not released yet.
+Read the [Release notes](release-notes.md) before you upgrade. For the changes to the code of each version, read the `CHANGELOG.md` file of the app repository.
 
 TODO(owner): Which version do you tell people to use, a tag or `main`?
 
