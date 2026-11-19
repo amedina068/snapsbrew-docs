@@ -47,6 +47,10 @@ const EXTERNAL_ENV = new Map([
   ['SNAPSBREW_SIGNING_KEY', 'read by the SDKs, not by the app'],
   ['SNAPSBREW_TOKEN', 'read by the SDKs, not by the app'],
   ['SNAPSBREW_URL', 'read by the SDKs, not by the app'],
+  ['SNAPSBREW_WEBHOOK_SECRET', 'read by the SDKs, not by the app'],
+  ['SNAPSBREW_TIMEOUT', 'read by the Laravel config of the PHP SDK, not by the app'],
+  ['SNAPSBREW_RETRIES', 'read by the Laravel config of the PHP SDK, not by the app'],
+  ['SNAPSBREW_WEBHOOK_TOLERANCE', 'read by the Laravel config of the PHP SDK, not by the app'],
   ['YOUR_API_TOKEN', 'the token placeholder of the Postman files, not a variable'],
 ]);
 
