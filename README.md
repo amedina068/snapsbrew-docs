@@ -15,6 +15,7 @@ The code of the app is in a separate repository. The docs describe that code, an
 - [Install without Docker](getting-started/installation-manual.md)
 - [Your first snap](getting-started/first-snap.md)
 - [Upgrading](getting-started/upgrading.md)
+- [Release notes](getting-started/release-notes.md)
 
 ### Self-hosting
 
