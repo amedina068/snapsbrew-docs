@@ -80,6 +80,7 @@ If `REQUIRE_MYSQL_LEDGER_GATE` is `true`, a MySQL-only test fails instead of a s
 | --- | --- |
 | Frontend build | Runs `npm ci` and `npm run build` on Node 22. |
 | Code style (Pint) | Runs `vendor/bin/pint --test` on PHP 8.3. |
+| API files | Runs `composer api-docs`, then fails if `git diff` shows a change in `docs/api`. |
 | PHP 8.3 and PHP 8.4 | Runs `php artisan migrate:fresh` on an empty SQLite file, then `vendor/bin/phpunit`, then `composer audit --no-dev`. |
 | MySQL lane | Runs a list of MySQL-only tests against MySQL 8.4, and stores the evidence files as an artifact. |
 
@@ -87,14 +88,15 @@ The security audit is a hard gate. A security advisory for a production package 
 
 ## Smoke tests
 
-The app has two smoke tests that run with Node. The CI does not run them.
+The app has three smoke tests that run with Node. The CI does not run them.
 
 | Command | What it tests |
 | --- | --- |
 | `npm run test:editor` | The editor in a real browser, through Puppeteer. The **Add layer** control gets keyboard focus, creates a text layer and keeps a changed value. |
+| `npm run test:editor-v2-save` | The editor in a real browser, through Puppeteer. A save of a template with a v2 editor document shows the error message of the editor. |
 | `npm run test:pwa` | The progressive web app files, with no browser. It checks `public/manifest.webmanifest`, the sizes of the icons and the offline behavior of the service worker. |
 
-The editor test needs a running instance. It reads `EDITOR_BASE_URL`. If that variable is empty, the test reads `APP_URL` from `.env`. The test creates the user `editor-browser-smoke@example.test` in that instance.
+The two editor tests need a running instance. They read `EDITOR_BASE_URL`. If that variable is empty, they read `APP_URL` from `.env`. They create the user `editor-browser-smoke@example.test` in that instance.
 
 The browser sandbox stays on by default. In a trusted local root container, set `EDITOR_BROWSER_NO_SANDBOX=1` to turn it off.
 
