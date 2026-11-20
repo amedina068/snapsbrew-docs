@@ -65,7 +65,7 @@ request (REST, MCP, signed URL, embedded form, editor, import)
 
 `App\Providers\AppServiceProvider` binds `SnapRenderer` and `PageScreenshotter` to the renderer that `RENDER_DRIVER` selects. Screenshots of web pages use `PageScreenshotter`. Tests bind `Tests\Support\FakeRenderer`, so a test never starts Chrome.
 
-`SnapBuilder` groups the variants of a snap by layer key. `LayerBuilder` applies the variants of each layer to its properties. The code has no `{{ }}` placeholder substitution, although the app `ARCHITECTURE.md` describes one.
+`SnapBuilder` groups the variants of a snap by layer key. `LayerBuilder` applies the variants of each layer to its properties. The code has no `{{ }}` placeholder substitution.
 
 ## Queues
 
