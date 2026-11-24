@@ -123,7 +123,7 @@ Returns the counts and each item. Read the batch every 5 seconds or so. Stop whe
 }
 ```
 
-- `media_url` has a value only on an item with status `completed`. On another item it is `null`. The snap object is different: a snap with no file has an empty string (`""`).
+- `media_url` has a value only on an item with status `completed`. On a `pending`, `processing`, `failed` or `canceled` item it is `null`, never an empty string. The [snap object](snaps.md#the-snap-object) is different: a snap with no file has an empty string (`""`).
 - `last_error` is a fixed code, the same as `last_error` of a [snap](snaps.md#the-snap-object). It never holds the message of the renderer.
 - A batch of another company returns `404`, the same as a batch that does not exist.
 

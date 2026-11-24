@@ -40,7 +40,7 @@ A `completed` batch can have failed items. Read the `failed` count as well as th
 - The default `identifier` is `item_1`, `item_2`, and more.
 - The response is always `202` with the batch `uuid` and a `status_url`.
 
-Read the batch with `GET /v1/snaps/batches/{uuid}`. Poll it about every 5 seconds. Stop when the status is terminal. Each item has `status`, `media_url` and `last_error`.
+Read the batch with `GET /v1/snaps/batches/{uuid}`. Poll it about every 5 seconds. Stop when the status is terminal. Each item has `status`, `media_url` and `last_error`. `media_url` is `null` until the item is complete, and stays `null` on a failed or canceled item. A single snap uses an empty string (`""`) for the same state.
 
 The full request and response are in [Snap batches API](../api/snap-batches.md).
 

@@ -62,7 +62,7 @@ If the dimensions of a template match no preset, the stored size is `custom`.
 
 A size change does not move or scale the layers. Each layer keeps its position and its size in pixels. If the new aspect ratio is different, move the layers in the editor.
 
-When the width or the height changes, the app makes a new preview image of the template.
+When the width or the height changes, the app makes a new preview image of the template. A change to the title only keeps the preview image. The same rule applies to the API and to the MCP tool `edit-template`. They also make a new preview image when the layers or the groups change.
 
 ## Draft and published versions
 

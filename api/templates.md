@@ -219,7 +219,9 @@ The request example is in [Examples](#examples).
 PATCH /v1/templates/{templateIdentifier}
 ```
 
-Updates the draft of a template and makes a new preview image.
+Updates the draft of a template.
+
+The app makes a new preview image only when `layers`, `groups`, `width` or `height` changes, or when the template has no preview image. A repeat of the same request, or a change to the title only, keeps the preview image and its URL. The app makes the preview image before it saves the template.
 
 | Parameter | In | Required | Description |
 |---|---|---|---|
@@ -262,6 +264,7 @@ curl -X PATCH https://snapsbrew.example/api/v1/templates/141e8454-8aa1-420a-bd0b
 | `404` | The template is not in your company. |
 | `409` | The template uses the v2 editor document. The body is `{"code": "legacy_edit_rejected_for_v2"}`. Use [Editor documents](editor-documents.md) for this template. |
 | `422` | A field failed a rule. |
+| `500` | The preview render failed. The app saved nothing. Send the same request again. |
 
 ## Publish a template
 
