@@ -19,17 +19,27 @@ This page describes version 0.2.0 of each library, on the `main` branch of its r
 
 The packages are not on npm, Packagist, PyPI or RubyGems yet. Version 0.2.0 has no release and no version tag. Install each package from its git repository. The repositories are private on GitHub, so you need read access to the repository of your language.
 
+| Language | Install from git |
+|---|---|
+| JavaScript and TypeScript | `npm install github:amedina068/snapsbrew-js` |
+| PHP | Add the VCS repository `https://github.com/amedina068/snapsbrew-php`, then run `composer require snapsbrew/snapsbrew-php:dev-main` |
+| Python | `pip install "git+https://github.com/amedina068/snapsbrew-python.git"` |
+| Ruby | `gem "snapsbrew", github: "amedina068/snapsbrew-ruby"` in the Gemfile, then `bundle install` |
+
+Each library is available under the MIT License. The Snapsbrew app has its own license.
+
 TODO(owner): When do you release the packages to the registries? The names are `snapsbrew` on npm, `snapsbrew/snapsbrew-php` on Packagist, `snapsbrew` on PyPI and `snapsbrew` on RubyGems. After the release, the install commands on this page change to `npm install snapsbrew`, `composer require snapsbrew/snapsbrew-php`, `pip install snapsbrew` and `gem "snapsbrew"`. Then the readers no longer need access to the repositories.
 
 ## What the libraries share
 
 - **Instance URL.** Each library takes the root URL of the instance, for example `https://snapsbrew.example`, and adds `/api`. No library has a default URL.
-- **Token.** Each library sends the API token as a bearer token. The token must have the `api_requests` ability. See [Create an API token](../api/overview.md#create-an-api-token).
-- **Resources.** Each library covers the account, templates, editor documents, snaps, batches, screenshots, media, tags and guides. Only the Ruby library covers embedded forms.
+- **Token.** Each library sends the API token as a bearer token. The token must have the `api_requests` ability. See [Create an API token](../api/overview.md#create-an-api-token). A client with no token can submit an embedded form. Each other call needs the token. If the client has no token, the call fails before the library sends the request.
+- **Resources.** Each library covers the account, templates, editor documents, snaps, batches, screenshots, media, tags, guides and embedded forms. See [Embedded forms](#embedded-forms).
 - **Signed URLs.** Each library signs a URL with a signed-URL key, not with the API token. The four libraries make the same signature for the same parameters, and each one passes the shared test vectors. See [Get a signed-URL key](../using-snapsbrew/signed-urls.md#get-a-signed-url-key).
 - **Webhooks.** Each library has one verifier for the webhooks of an async snap and of a batch. See [Webhook verification](#webhook-verification).
 - **Errors.** Each library has one error class for each status: `401`, `403`, `404`, `409`, `422`, `429` and `5xx`. The error carries the `code` of the body and the request ID. See [Errors](#errors).
 - **Retries.** Each library retries a failed request two times by default, with the same rules. See [Retries](#retries).
+- **Timeout.** The default timeout of one attempt is 60 seconds in each library, because a synchronous render can take that long.
 - **No telemetry.** No library sends data to a party other than your instance.
 
 WARNING: Keep the API token, the signed-URL key and the webhook signing secret on your server. Do not put them in browser code or in a mobile app. A person with the signed-URL key can render images on your account.
@@ -41,9 +51,10 @@ An async snap and a batch post a webhook to their webhook URL. The instance sign
 Each verifier works the same way:
 
 - It reads three headers: `X-Snapsbrew-Signature`, `X-Snapsbrew-Timestamp` and `X-Snapsbrew-Delivery`. The header names are not case-sensitive.
-- It computes the HMAC-SHA256 of `{X-Snapsbrew-Timestamp}.{raw body}` with the secret. It compares the result with `X-Snapsbrew-Signature` in constant time.
+- It computes the HMAC-SHA256 of `{X-Snapsbrew-Timestamp}.{raw body}` with the secret. It changes `X-Snapsbrew-Signature` to lowercase, then compares the two values in constant time.
 - It refuses a timestamp that is more than 300 seconds before or after the current time. A `tolerance` setting changes this limit.
 - It returns the decoded body, the timestamp and the delivery ID. The delivery ID is the value of `X-Snapsbrew-Delivery`. All attempts of one delivery have the same ID.
+- If `X-Snapsbrew-Delivery` is missing, the verification passes and the delivery ID is null (`null`, `None` or `nil`). Older instances do not send this header.
 - It accepts an event type that it does not know. A new instance version can add an event.
 
 To receive a webhook:
@@ -51,20 +62,39 @@ To receive a webhook:
 1. Read the raw request body, byte for byte.
 2. Give the raw body, the headers and the secret to the verifier.
 3. If the verifier raises its error, answer with `400`.
-4. If you know the delivery ID already, answer with `200` and do nothing.
+4. If the delivery ID is not null and you know it already, answer with `200` and do nothing.
 5. Store the delivery ID, then do the work of the event.
 
 Do not decode the JSON and encode it again before you verify it. The instance escapes `/` and non-ASCII characters (`\/`, `¿`). A new encoding gives other bytes, and the signature check fails.
 
-The events are `snap.completed`, `snap.failed`, `snap-import.completed`, `snap-import.failed` and `snap-import.canceled`. A `snap.failed` body has a snap with `status` `failed`, `last_error` `render_failed` and an empty `media_url`. A `snap-import.*` body has `import`, with the counts of the batch, and `template`, with its `uuid` and `title`.
+The events are `snap.completed`, `snap.failed`, `snap-import.completed`, `snap-import.failed` and `snap-import.canceled`. A `snap.failed` body has a snap with `status` `failed`, `last_error` `render_failed` and an empty `media_url`. Each library gives `media_url` as an empty string. A `snap-import.*` body has `import`, with the counts of the batch, and `template`, with its `uuid` and `title`.
 
-The libraries differ in three points:
+The error of the verifier has a `reason`. The four libraries use the same three reasons, in the style of each language:
 
-| | JavaScript | PHP | Python | Ruby |
-|---|---|---|---|---|
-| Error reasons | `signature`, `timestamp`, `delivery` | `Signature`, `Timestamp`, `Payload` | `signature`, `timestamp`, `delivery` | `:signature`, `:timestamp` |
-| No `X-Snapsbrew-Delivery` header | Refused (`delivery`) | Accepted. `deliveryId` is `null`. | Refused (`delivery`) | Accepted. `delivery_id` is `nil`. |
-| `media_url` of a failed snap | `""` | `null` | `None` | `""` |
+| Reason | Cause | JavaScript | PHP | Python | Ruby |
+|---|---|---|---|---|---|
+| signature | The signature header is missing, or the signature does not match the body. | `"signature"` | `VerificationFailure::Signature` | `"signature"` | `:signature` |
+| timestamp | The timestamp header is missing, is not Unix seconds, or is outside the tolerance. | `"timestamp"` | `VerificationFailure::Timestamp` | `"timestamp"` | `:timestamp` |
+| payload | The signature is valid, but the body is not a JSON object. | `"payload"` | `VerificationFailure::Payload` | `"payload"` | `:payload` |
+
+The delivery ID is `deliveryId` in JavaScript and PHP, and `delivery_id` in Python and Ruby.
+
+### Embedded forms
+
+Each library sends the values of an [embedded form](../api/embedded-forms.md) to its signed submit URL with `forms.submit(url, layers)`. The form renders on the account of its owner, so the library sends no API token to the submit URL. A client with no token can submit a form.
+
+| Language | Call | Image value |
+|---|---|---|
+| JavaScript | `await sb.forms.submit(submitUrl, { headline: "Hello", photo: file })` | A `Blob` or a `File` |
+| PHP | `$snapsbrew->forms()->submit($submitUrl, ['headline' => 'Hello', 'photo' => $file])` | A resource or an `SplFileInfo` |
+| Python | `client.forms.submit(submit_url, {"headline": "Hello", "photo": Path("photo.png")})` | A path, bytes or a binary file object |
+| Ruby | `Snapsbrew.forms.submit(submit_url, headline: "Hello", photo: params[:photo])` | A File, a `Pathname` or an uploaded file |
+
+- A text value is a string.
+- A template form returns one snap. A collection form returns a list of snaps, and its layer keys are `{template uuid}__{layer key}`.
+- If the signature is not valid, or the form does not exist, the call raises the not-found error.
+- If one IP address or one form sends too many submits in one minute, the call raises the rate-limit error with the code `rate_limited`. The library retries it.
+- No library retries a submit after a `5xx`, because each submit renders a snap.
 
 ### Errors
 
@@ -116,16 +146,13 @@ A `409` has one of the codes in [Conflict codes](../api/overview.md#conflict-cod
 - The wait starts at 0.5 seconds and doubles on each attempt, to a maximum of 8 seconds. Half of each wait is random (jitter).
 - If the response has a `Retry-After` header, the library waits for that time.
 - If `Retry-After` is more than 60 seconds, the library does not wait. It raises the error at once.
-- A `POST /v1/snaps` or `POST /v1/snaps/batches` with an idempotency key is safe to repeat. See [Idempotency keys](../api/overview.md#idempotency-keys).
-- In each library, a template publish, a batch cancel and a tag sync are safe to repeat.
-- A write to an editor document is not safe to repeat, because a repeat after a lost response gets a conflict. The PHP library is an exception for the replace call. See the table below.
+These calls are safe to repeat in each library:
 
-The libraries differ for these calls:
+- Each `GET` and `DELETE`, for example a template delete. After a lost response, a repeated template delete gets a `404`, because the first request deleted the template.
+- A template publish, a change to the tags of a template, and a batch cancel.
+- A `POST /v1/snaps` or `POST /v1/snaps/batches` with an idempotency key. See [Idempotency keys](../api/overview.md#idempotency-keys).
 
-| Call | JavaScript | PHP | Python | Ruby |
-|---|---|---|---|---|
-| Template delete (`DELETE`) | Safe to repeat | Safe to repeat | Safe to repeat | No retry after `5xx` or a timeout |
-| Document replace (`PUT`) | No retry after `5xx` or a timeout | Retry after `5xx` or a timeout | No retry after `5xx` or a timeout | No retry after `5xx` or a timeout |
+The other calls are not safe to repeat: a template create or update, a snap or a batch with no idempotency key, a screenshot, a media upload, a tag create and a form submit. A write to an editor document (replace or apply) is not safe to repeat, because a repeat after a lost response gets a conflict. No library retries these calls after a `5xx` or a timeout.
 
 The [rate limits](../api/overview.md#rate-limits) are 60 requests in one minute for one user. A preview also has a limit of 10 in one minute. The editor document endpoints also have a limit of 30 for one user and 180 for one company.
 
@@ -179,14 +206,14 @@ console.log(snap.media_url);
 
 The request parameters use camelCase, for example `templateId`. The response fields keep the names of the API, for example `media_url`.
 
-The resources are `sb.account`, `sb.templates`, `sb.documents`, `sb.snaps`, `sb.batches`, `sb.screenshots`, `sb.media`, `sb.tags` and `sb.guides`.
+The resources are `sb.account`, `sb.templates`, `sb.documents`, `sb.snaps`, `sb.batches`, `sb.screenshots`, `sb.media`, `sb.tags`, `sb.guides` and `sb.forms`.
 
 ### Configuration
 
 | Setting | Default | Description |
 |---|---|---|
 | `baseUrl` | (required) | The root URL of your instance. |
-| `token` | (required) | The API token. |
+| `token` | none | The API token. Each API call needs it. Without a token, an API call throws a `TypeError` before the send. Only `sb.forms.submit()` works without a token. |
 | `timeout` | `60000` | The time limit for one attempt, in milliseconds. |
 | `maxRetries` | `2` | The number of retries after the first attempt. `0` stops retries. |
 | `fetch` | the global `fetch` | A `fetch` function for a proxy, for logs or for tests. |
@@ -294,7 +321,7 @@ switch (payload.event) {
 | `tolerance` | `300` | The maximum distance of the timestamp from now, in seconds. |
 | `now` | `new Date()` | The current time. Use it in tests. |
 
-The result has `deliveryId`, `timestamp` and `payload`. A `switch (payload.event)` narrows the type of `payload`.
+The result has `deliveryId`, `timestamp` and `payload`. `deliveryId` is `null` when the delivery header is missing. A `switch (payload.event)` narrows the type of `payload`.
 
 This example receives webhooks in an Express app. Use `express.raw()` on the webhook route, because `express.json()` loses the raw bytes:
 
@@ -421,16 +448,16 @@ $snap = $snapsbrew->snaps()->create($templateId, Variants::make()
 echo $snap->mediaUrl;
 ```
 
-The resources are `account()`, `templates()`, `documents()`, `snaps()`, `batches()`, `screenshots()`, `media()`, `tags()` and `guides()`.
+The resources are `account()`, `templates()`, `documents()`, `snaps()`, `batches()`, `screenshots()`, `media()`, `tags()`, `guides()` and `forms()`.
 
 ### Configuration
 
 | Argument | Default | Description |
 |---|---|---|
 | `url` | (required) | The URL of your instance. The library removes a trailing `/api`. |
-| `token` | `null` | The API token. The API calls need it. |
+| `token` | `null` | The API token. Each API call needs it. Without a token, an API call throws a `MissingCredentialsException` before the send. Only `forms()->submit()` works without a token. |
 | `signingKey` | `null` | The signed-URL key. Signed URLs need it. |
-| `timeout` | `30.0` | The request timeout, in seconds. |
+| `timeout` | `60.0` | The request timeout, in seconds. |
 | `retries` | `2` | The number of retries, or a `Snapsbrew\Http\RetryPolicy`. |
 | `httpClient` | Guzzle, or discovery | A PSR-18 client. |
 | `requestFactory`, `streamFactory` | discovery | PSR-17 factories. |
@@ -446,7 +473,7 @@ SNAPSBREW_SIGNING_KEY=<your-signing-key>
 SNAPSBREW_WEBHOOK_SECRET=<your-webhook-secret>
 ```
 
-`SNAPSBREW_TIMEOUT` (default `30`), `SNAPSBREW_RETRIES` (default `2`) and `SNAPSBREW_WEBHOOK_TOLERANCE` (default `300`) are optional.
+`SNAPSBREW_TIMEOUT` (default `60`), `SNAPSBREW_RETRIES` (default `2`) and `SNAPSBREW_WEBHOOK_TOLERANCE` (default `300`) are optional.
 
 ### Pagination
 
@@ -496,7 +523,7 @@ new Snapsbrew(url: $url, token: $token, retries: new RetryPolicy(
 ));
 ```
 
-The library treats each `GET`, `PUT` and `DELETE` as safe to repeat. It also treats `templates()->publish()`, `batches()->cancel()` and `tags()->sync()` as safe to repeat. `documents()->replace()` uses `PUT`, so the library retries it after a `5xx` or a timeout.
+The library treats each `GET`, `PUT` and `DELETE` as safe to repeat, except `documents()->replace()`. It also treats `templates()->publish()`, `templates()->setTags()` and `batches()->cancel()` as safe to repeat.
 
 ### Signed URLs
 
@@ -569,7 +596,7 @@ Route::post('/webhooks/snapsbrew', function (Request $request, Webhook $webhook)
 
 ### Editor documents
 
-`documents()` has `find()`, `replace()`, `apply()` and `preflight()`. See [Editor documents](../api/editor-documents.md).
+`documents()` has `find()`, `replace($uuid, $revision, $document)`, `apply($uuid, $revision, $operations)` and `preflight()`. See [Editor documents](../api/editor-documents.md).
 
 ```php
 use Snapsbrew\Exceptions\ConflictException;
@@ -577,9 +604,9 @@ use Snapsbrew\Exceptions\ConflictException;
 $document = $snapsbrew->documents()->find($uuid);
 
 try {
-    $document = $snapsbrew->documents()->apply($uuid, [
+    $document = $snapsbrew->documents()->apply($uuid, revision: $document->revision, operations: [
         ['operation' => 'set_layer_property', 'layer_key' => 'headline', 'property' => 'fontWeight', 'value' => 700],
-    ], revision: $document->revision);
+    ]);
 } catch (ConflictException $exception) {
     // Apply your change to $exception->currentDocument().
     // Then send it with $exception->currentRevision().
@@ -621,15 +648,15 @@ with Snapsbrew(base_url="https://snapsbrew.example", token="<your-token>") as cl
     print(snap.media_url)
 ```
 
-The resources are `client.templates`, `client.documents`, `client.snaps`, `client.batches`, `client.screenshots`, `client.media`, `client.tags` and `client.guides`. `client.whoami()` reads the account.
+The resources are `client.templates`, `client.documents`, `client.snaps`, `client.batches`, `client.screenshots`, `client.media`, `client.tags`, `client.guides` and `client.forms`. `client.account()` reads the account.
 
 ### Configuration
 
 | Setting | Default | Description |
 |---|---|---|
 | `base_url` | `$SNAPSBREW_URL` | The URL of your instance. The client removes a trailing `/` and a trailing `/api`. |
-| `token` | `$SNAPSBREW_TOKEN` | The API token. |
-| `timeout` | `30.0` | The timeout of each request, in seconds, or an `httpx.Timeout`. |
+| `token` | `$SNAPSBREW_TOKEN` | The API token. Each API call needs it. Without a token, an API call raises `ValueError` before the send. Only `client.forms.submit()` works without a token. |
+| `timeout` | `60.0` | The timeout of each request, in seconds, or an `httpx.Timeout`. |
 | `max_retries` | `2` | The number of retries. `0` stops retries. |
 | `http_client` | a new `httpx.Client` | Your own `httpx.Client`, for a proxy or custom headers. |
 
@@ -675,7 +702,7 @@ Set `max_retries=0` to stop retries. Give an `idempotency_key` to make a render 
 snap = client.snaps.create(template_id, variants, idempotency_key="order-1042-card")
 ```
 
-The client treats each `GET` as safe to repeat. It also treats `templates.publish()`, `templates.set_tags()`, `templates.delete()` and `batches.cancel()` as safe to repeat.
+The client treats each `GET` and `DELETE` as safe to repeat, for example `templates.delete()`. It also treats `templates.publish()`, `templates.set_tags()` and `batches.cancel()` as safe to repeat.
 
 ### Signed URLs
 
@@ -712,7 +739,7 @@ if event.type == "snap.completed":
 `verify_webhook()` returns a `WebhookEvent` with these fields:
 
 - `type`: the `event` field of the body.
-- `delivery_id`: the value of `X-Snapsbrew-Delivery`.
+- `delivery_id`: the value of `X-Snapsbrew-Delivery`, or `None`.
 - `timestamp`: the value of `X-Snapsbrew-Timestamp`, in Unix seconds.
 - `data`: the decoded body.
 - `snap`: a `Snap` for a `snap.*` event, else `None`.
@@ -807,7 +834,7 @@ snap.media_url
 
 The variants Hash maps a layer key to a value. A string becomes `text`, an `http` or `https` URL becomes `image_url`, and `false` or `nil` hides the layer.
 
-The resources are `Snapsbrew.account`, `templates`, `documents`, `snaps`, `batches`, `screenshots`, `media`, `tags`, `guides` and `forms`. To connect to more than one instance, make a client for each instance:
+The resources are `Snapsbrew.account`, `templates`, `documents`, `snaps`, `batches`, `screenshots`, `media`, `tags`, `guides` and `forms`. `templates.set_tags(id, tag_ids)` replaces the tags of a template, and `templates.preview(id, variants:)` returns a watermarked preview. To connect to more than one instance, make a client for each instance:
 
 ```ruby
 client = Snapsbrew::Client.new(url: "https://snapsbrew.example", token: ENV["SNAPSBREW_TOKEN"])
@@ -819,7 +846,7 @@ client.templates.list
 | Setting | Default | Description |
 |---|---|---|
 | `url` | `SNAPSBREW_URL` | The URL of your instance, with or without `/api`. |
-| `token` | `SNAPSBREW_TOKEN` | The API token. |
+| `token` | `SNAPSBREW_TOKEN` | The API token. Each API call needs it. Without a token, an API call raises `Snapsbrew::ConfigurationError` before the send. Only `forms.submit` works without a token. |
 | `signing_key` | `SNAPSBREW_SIGNING_KEY` | The signed-URL key. Only signed URLs need it. |
 | `webhook_secret` | `SNAPSBREW_WEBHOOK_SECRET` | The webhook signing secret. Only `Snapsbrew::Webhook.verify` needs it. |
 | `timeout` | `60` | The seconds to wait for a connection and for a response. |
@@ -868,7 +895,7 @@ Set `max_retries` to `0` to stop retries. Give an `idempotency_key` to make a re
 Snapsbrew.snaps.create(template: id, variants: { title: "Hello" }, idempotency_key: "order-1234")
 ```
 
-The gem treats each `GET` as safe to repeat. It also treats `templates.publish`, `batches.cancel` and `tags.sync` as safe to repeat. It does not retry `templates.destroy` after a `5xx` or a timeout.
+The gem treats each `GET`, `PUT` and `DELETE` as safe to repeat, for example `templates.destroy`, except `documents.replace`. It also treats `templates.publish`, `templates.set_tags` and `batches.cancel` as safe to repeat.
 
 ### Signed URLs
 
@@ -884,20 +911,20 @@ In a Rails view, `snapsbrew_image_tag` and `snapsbrew_og_image_tag` sign the URL
 
 `Snapsbrew::Webhook.verify(body, headers, secret:, tolerance:, now:)` returns the decoded event. The default `secret` is `config.webhook_secret`, and the default `tolerance` is `300`. `headers` can be the Rails `request.headers`, a Rack env or a Hash.
 
-The event is a `Snapsbrew::Record` with `delivery_id`. Read the body fields as methods, for example `event.event` and `event.snap`. `Snapsbrew::Webhook::EVENTS` lists the five events.
+The event is a `Snapsbrew::Record` with `delivery_id`. `delivery_id` is `nil` when the delivery header is missing. Read the body fields as methods, for example `event.event` and `event.snap`. `Snapsbrew::Webhook::EVENTS` lists the five events.
 
 ```ruby
 class SnapsbrewWebhooksController < ActionController::API
   def create
     event = Snapsbrew::Webhook.verify(request.raw_post, request.headers)
-    return head(:ok) if WebhookDelivery.exists?(delivery_id: event.delivery_id)
+    return head(:ok) if event.delivery_id && WebhookDelivery.exists?(delivery_id: event.delivery_id)
 
     case event.event
     when "snap.completed" then Cover.attach(event.snap.id, event.snap.media_url)
     when "snap.failed"    then Cover.fail(event.snap.id, event.snap.last_error)
     end
 
-    WebhookDelivery.create!(delivery_id: event.delivery_id)
+    WebhookDelivery.create!(delivery_id: event.delivery_id) if event.delivery_id
     head :ok
   rescue Snapsbrew::WebhookVerificationError
     head :bad_request
@@ -946,4 +973,4 @@ snaps = Snapsbrew.forms.submit(collection_submit_url, "141e8454-8aa1-420a-bd0b-1
 - If the signature is not valid, or the form does not exist, `submit` raises a `NotFoundError`.
 - If one IP address or one form sends too many submits in one minute, `submit` raises a `RateLimitError` with the code `rate_limited`.
 
-The JavaScript, PHP and Python libraries do not cover embedded forms. Send the request with your own HTTP client. See [Submit an embedded form](../api/embedded-forms.md#submit-an-embedded-form).
+The other libraries have the same call. See [Embedded forms](#embedded-forms).
