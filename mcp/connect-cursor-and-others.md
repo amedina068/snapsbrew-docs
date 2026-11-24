@@ -78,7 +78,9 @@ CAUTION: Add a scheme only for a client that you trust. The instance accepts a l
 
 A redirect URI with a custom scheme must also have a host. Read [OAuth for the MCP server](oauth.md).
 
-TODO(owner): Which desktop clients do we support with OAuth, and which scheme does each one use?
+The project supports OAuth with the [Claude custom connector](connect-claude.md#claude-custom-connector). The project does not test OAuth with a desktop client. For Cursor, Codex CLI, Claude Code, Claude Desktop and the other desktop clients, use an API token. Each client on this page accepts the token in a header.
+
+If a desktop client can connect only with OAuth, find its callback scheme in the documentation of the client. Add only that scheme to `MCP_CUSTOM_SCHEMES`.
 
 ## Develop a connector on your computer
 

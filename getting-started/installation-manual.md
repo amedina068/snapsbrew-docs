@@ -21,7 +21,9 @@ This page installs Snapsbrew on a Linux server without Docker. For a test on you
 | Web server | NGINX or Apache with PHP-FPM. The document root is the `public` folder. |
 | Renderer | A Browserless service, or a local Chrome for Browsershot. Read [Rendering](../self-hosting/rendering.md). |
 
-TODO(owner): Is MySQL the only supported production database, or do you also accept PostgreSQL or MariaDB reports?
+MySQL 8 is the only supported production database. Use MySQL 8.4, the version that the Docker stack and the CI use. SQLite is only for local development and the test suite. The project does not support PostgreSQL or MariaDB. Before you report a database bug, reproduce it on MySQL.
+
+The [`deploy/`](https://github.com/amedina068/snapsbrew/tree/main/deploy) folder of the app has example files for this page: NGINX, Caddy, systemd, Supervisor and PHP. Copy an example, then replace the example values with your values. Read the [deploy README](https://github.com/amedina068/snapsbrew/blob/main/deploy/README.md).
 
 ## Install the code
 
@@ -50,6 +52,22 @@ TODO(owner): Is MySQL the only supported production database, or do you also acc
    ```bash
    php artisan key:generate
    ```
+
+## Set the PHP limits
+
+A spreadsheet import and an image upload accept 10 MB. The default PHP limit is 2 MB. If the PHP limit is lower than 10 MB, a larger file never reaches the app, and the user reads "The file field is required."
+
+1. Copy [`deploy/php/snapsbrew.ini`](https://github.com/amedina068/snapsbrew/blob/main/deploy/php/snapsbrew.ini) to the `conf.d` folder of PHP-FPM, for example `/etc/php/8.4/fpm/conf.d/99-snapsbrew.ini`.
+2. Restart PHP-FPM.
+
+## Configure the web server
+
+The document root is the `public` folder. Use one of these examples:
+
+- NGINX: [`deploy/nginx/snapsbrew-php-fpm.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/nginx/snapsbrew-php-fpm.conf)
+- Caddy: [`deploy/caddy/Caddyfile.php-fpm`](https://github.com/amedina068/snapsbrew/blob/main/deploy/caddy/Caddyfile.php-fpm)
+
+Both examples send each request for a file that does not exist to `public/index.php`. The OAuth discovery documents under `/.well-known/` go to the app this way, so do not block that path.
 
 ## Edit `.env`
 
@@ -112,22 +130,23 @@ Snapsbrew needs two long-running processes next to the web server:
 - The queue worker: `php artisan horizon`. Read [Queues and Horizon](../self-hosting/queues-and-horizon.md).
 - The scheduler. Read [Scheduler](../self-hosting/scheduler.md).
 
-Use a process manager, for example systemd or Supervisor, to keep Horizon running. The repository ships no unit file for this. This is an example for systemd:
+Use a process manager to keep both processes running. The app repository has examples:
 
-```ini
-[Unit]
-Description=Snapsbrew Horizon
-After=network.target
+- systemd: [`deploy/systemd/snapsbrew-horizon.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-horizon.service) and [`deploy/systemd/snapsbrew-scheduler.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-scheduler.service)
+- Supervisor: [`deploy/supervisor/snapsbrew.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/supervisor/snapsbrew.conf)
 
-[Service]
-User=www-data
-WorkingDirectory=/var/www/snapsbrew
-ExecStart=/usr/bin/php artisan horizon
-Restart=always
+To install the systemd units:
 
-[Install]
-WantedBy=multi-user.target
-```
+1. Replace `www-data`, `/var/www/snapsbrew` and `/usr/bin/php` in the two files with your values.
+2. Copy the files to `/etc/systemd/system/`.
+3. Start the units:
+
+   ```bash
+   systemctl daemon-reload
+   systemctl enable --now snapsbrew-horizon snapsbrew-scheduler
+   ```
+
+The scheduler unit runs `php artisan schedule:work`. It replaces the cron entry of [Scheduler](../self-hosting/scheduler.md). Use one of the two, not both.
 
 ## Start the renderer
 

@@ -86,8 +86,16 @@ The `mysqldump` with `--single-transaction` makes a consistent copy while the ap
 - Copy the `storage` folder.
 - Copy `.env`.
 
+## Schedule and retention
+
+- Back up the database and the `storage` folder each day, at a time with little traffic.
+- Keep the daily backups for 14 days. Also keep one backup of each week for 8 weeks.
+- Keep at least one copy on another server or with another provider. A backup on the same disk as the instance does not survive a disk failure.
+- Back up `.env` each time that you change it.
+- If `MEDIA_DISK` is a bucket, turn on the versioning of the bucket. Keep old versions for 14 days.
+
+These are the recommended values of the project. An instance with many renders each day can back up the database more often.
+
 ## Test the backup
 
-Restore a backup on a test machine from time to time. Then make sure that you can sign in, open a template and render a snap.
-
-TODO(owner): Do you recommend a backup schedule or a retention period for self-hosted instances?
+Restore a backup on a test machine one time each quarter. Then make sure that you can sign in, open a template and render a snap.
