@@ -33,7 +33,7 @@ TODO(owner): When do you release the packages to the registries? The names are `
 ## What the libraries share
 
 - **Instance URL.** Each library takes the root URL of the instance, for example `https://snapsbrew.example`, and adds `/api`. No library has a default URL.
-- **Token.** Each library sends the API token as a bearer token. The token must have the `api_requests` ability. See [Create an API token](../api/overview.md#create-an-api-token).
+- **Token.** Each library sends the API token as a bearer token. The token must have the `api_requests` ability. See [Create an API token](../api/overview.md#create-an-api-token). A client with no token can submit an embedded form. Each other call needs the token. If the client has no token, the call fails before the library sends the request.
 - **Resources.** Each library covers the account, templates, editor documents, snaps, batches, screenshots, media, tags, guides and embedded forms. See [Embedded forms](#embedded-forms).
 - **Signed URLs.** Each library signs a URL with a signed-URL key, not with the API token. The four libraries make the same signature for the same parameters, and each one passes the shared test vectors. See [Get a signed-URL key](../using-snapsbrew/signed-urls.md#get-a-signed-url-key).
 - **Webhooks.** Each library has one verifier for the webhooks of an async snap and of a batch. See [Webhook verification](#webhook-verification).
@@ -81,7 +81,7 @@ The delivery ID is `deliveryId` in JavaScript and PHP, and `delivery_id` in Pyth
 
 ### Embedded forms
 
-Each library sends the values of an [embedded form](../api/embedded-forms.md) to its signed submit URL with `forms.submit(url, layers)`. The form renders on the account of its owner, so the library sends no API token to the submit URL.
+Each library sends the values of an [embedded form](../api/embedded-forms.md) to its signed submit URL with `forms.submit(url, layers)`. The form renders on the account of its owner, so the library sends no API token to the submit URL. A client with no token can submit a form.
 
 | Language | Call | Image value |
 |---|---|---|
@@ -213,7 +213,7 @@ The resources are `sb.account`, `sb.templates`, `sb.documents`, `sb.snaps`, `sb.
 | Setting | Default | Description |
 |---|---|---|
 | `baseUrl` | (required) | The root URL of your instance. |
-| `token` | (required) | The API token. |
+| `token` | none | The API token. Each API call needs it. Without a token, an API call throws a `TypeError` before the send. Only `sb.forms.submit()` works without a token. |
 | `timeout` | `60000` | The time limit for one attempt, in milliseconds. |
 | `maxRetries` | `2` | The number of retries after the first attempt. `0` stops retries. |
 | `fetch` | the global `fetch` | A `fetch` function for a proxy, for logs or for tests. |
@@ -455,7 +455,7 @@ The resources are `account()`, `templates()`, `documents()`, `snaps()`, `batches
 | Argument | Default | Description |
 |---|---|---|
 | `url` | (required) | The URL of your instance. The library removes a trailing `/api`. |
-| `token` | `null` | The API token. The API calls need it. |
+| `token` | `null` | The API token. Each API call needs it. Without a token, an API call throws a `MissingCredentialsException` before the send. Only `forms()->submit()` works without a token. |
 | `signingKey` | `null` | The signed-URL key. Signed URLs need it. |
 | `timeout` | `60.0` | The request timeout, in seconds. |
 | `retries` | `2` | The number of retries, or a `Snapsbrew\Http\RetryPolicy`. |
@@ -655,7 +655,7 @@ The resources are `client.templates`, `client.documents`, `client.snaps`, `clien
 | Setting | Default | Description |
 |---|---|---|
 | `base_url` | `$SNAPSBREW_URL` | The URL of your instance. The client removes a trailing `/` and a trailing `/api`. |
-| `token` | `$SNAPSBREW_TOKEN` | The API token. |
+| `token` | `$SNAPSBREW_TOKEN` | The API token. Each API call needs it. Without a token, an API call raises `ValueError` before the send. Only `client.forms.submit()` works without a token. |
 | `timeout` | `60.0` | The timeout of each request, in seconds, or an `httpx.Timeout`. |
 | `max_retries` | `2` | The number of retries. `0` stops retries. |
 | `http_client` | a new `httpx.Client` | Your own `httpx.Client`, for a proxy or custom headers. |
@@ -846,7 +846,7 @@ client.templates.list
 | Setting | Default | Description |
 |---|---|---|
 | `url` | `SNAPSBREW_URL` | The URL of your instance, with or without `/api`. |
-| `token` | `SNAPSBREW_TOKEN` | The API token. |
+| `token` | `SNAPSBREW_TOKEN` | The API token. Each API call needs it. Without a token, an API call raises `Snapsbrew::ConfigurationError` before the send. Only `forms.submit` works without a token. |
 | `signing_key` | `SNAPSBREW_SIGNING_KEY` | The signed-URL key. Only signed URLs need it. |
 | `webhook_secret` | `SNAPSBREW_WEBHOOK_SECRET` | The webhook signing secret. Only `Snapsbrew::Webhook.verify` needs it. |
 | `timeout` | `60` | The seconds to wait for a connection and for a response. |
