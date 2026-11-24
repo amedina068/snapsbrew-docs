@@ -100,7 +100,7 @@ For the full catalog, call [`GET /v1/guides/variant-properties`](guides.md#list-
 }
 ```
 
-`202` for an async snap. `media_url` is `null` and `status` is `pending`.
+`202` for an async snap. `media_url` is an empty string (`""`) and `status` is `pending`.
 
 A request with `collection_id` returns a list of snap objects, one for each template.
 
@@ -109,7 +109,7 @@ A request with `collection_id` returns a list of snap objects, one for each temp
 | Field | Type | Description |
 |---|---|---|
 | `id` | string | The UUID of the snap. |
-| `media_url` | string or null | The URL of the file. It is `null` until the render completes. |
+| `media_url` | string | The URL of the file. It is an empty string (`""`) until the render completes, and on a failed or canceled snap. It is never `null`. |
 | `width` | integer or null | The width in pixels of the template version that the snap rendered. |
 | `height` | integer or null | The height in pixels of the template version that the snap rendered. |
 | `type` | string | `image` or `pdf`. |

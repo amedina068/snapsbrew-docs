@@ -69,6 +69,34 @@ The first start runs all the migrations. It can take some minutes. The health ch
 
 If `DB_PASSWORD`, `DB_ROOT_PASSWORD` or `BROWSERLESS_TOKEN` is empty, `docker compose` stops with an error that names the missing variable.
 
+## Install from the published image
+
+`docker-compose.image.yml` runs the same stack with the published image `ghcr.io/amedina068/snapsbrew`. You do not clone the repository, and you do not build the image. A release publishes the image. Before the first release, use the build steps above.
+
+1. Put `docker-compose.image.yml` and `.env.docker.example` from the app repository in an empty folder.
+2. Do steps 2 to 5 of the install above.
+3. In `.env`, set `SNAPSBREW_VERSION` to an exact version, for example `SNAPSBREW_VERSION=0.1.0`. If you do not set it, the stack uses `latest`.
+4. Start the stack:
+
+   ```bash
+   docker compose -f docker-compose.image.yml up -d
+   ```
+
+5. Read the setup URL in the log of the `web` container:
+
+   ```bash
+   docker compose -f docker-compose.image.yml logs web
+   ```
+
+To update, change `SNAPSBREW_VERSION`. Then run:
+
+```bash
+docker compose -f docker-compose.image.yml pull
+docker compose -f docker-compose.image.yml up -d
+```
+
+With this file, add `-f docker-compose.image.yml` to each `docker compose` command on this page.
+
 ## The setup URL
 
 The setup page at `/setup` creates the owner account. It is open only while the instance has no user. After the first user exists, `/setup` returns 404.
