@@ -16,6 +16,7 @@ Snapsbrew runs cleanup and repair commands on a timer. The Laravel scheduler sta
 | `php artisan creative-packages:reconcile` | Every minute, never two at the same time | Dispatches again, marks as exhausted, or counts again the items of incomplete creative packages. It restarts items that the queue lost. |
 | `php artisan creative-packages:prune` | Every hour, never two at the same time | Deletes the creative packages that are older than the replay window (90 days) and releases their idempotency keys. |
 | `php artisan creative-packages:prune-diagnostics` | Every hour, never two at the same time | Clears the item diagnostics that are older than the diagnostic window (30 days). |
+| `php artisan oauth-clients:prune` | Every day, never two at the same time | Deletes each OAuth client that registered itself at `/oauth/register`, is older than 7 days and has no access token. |
 
 Each pass of the creative package commands has a limit, so one pass never runs for a long time.
 
@@ -32,6 +33,8 @@ Add one cron entry for the user that runs the app:
 ```cron
 * * * * * cd /var/www/snapsbrew && php artisan schedule:run >> /dev/null 2>&1
 ```
+
+You can also run `php artisan schedule:work` under a process manager, as the Docker stack does. The app repository has a systemd unit, [`deploy/systemd/snapsbrew-scheduler.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-scheduler.service), and a Supervisor file, [`deploy/supervisor/snapsbrew.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/supervisor/snapsbrew.conf). Use the cron entry or the process manager, not both.
 
 Use only one scheduler for each instance. "Never two at the same time" uses a cache lock.
 

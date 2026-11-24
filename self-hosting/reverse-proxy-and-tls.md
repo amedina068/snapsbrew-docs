@@ -65,6 +65,8 @@ The Compose files publish the app port on `127.0.0.1`. Only a client on the host
 
 ## Example: Caddy
 
+The app repository has this example as [`deploy/caddy/Caddyfile`](https://github.com/amedina068/snapsbrew/blob/main/deploy/caddy/Caddyfile).
+
 Caddy gets a certificate for you and sends the forwarded headers by default:
 
 ```text
@@ -74,6 +76,8 @@ snapsbrew.example {
 ```
 
 ## Example: NGINX
+
+The app repository has a full example with the HTTP to HTTPS redirect as [`deploy/nginx/snapsbrew-docker.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/nginx/snapsbrew-docker.conf).
 
 ```nginx
 server {

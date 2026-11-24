@@ -32,7 +32,7 @@ If `QUEUE_CONNECTION` is `redis` and Horizon does not run, async snaps, batches 
 
 With Docker, the `horizon` container runs `php artisan horizon`. It starts after the `web` container is healthy. It gets 60 seconds to stop.
 
-Without Docker, run `php artisan horizon` under a process manager, for example systemd or Supervisor. Read [Install without Docker](../getting-started/installation-manual.md) for an example unit.
+Without Docker, run `php artisan horizon` under a process manager. The app repository has a systemd unit, [`deploy/systemd/snapsbrew-horizon.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-horizon.service), and a Supervisor file, [`deploy/supervisor/snapsbrew.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/supervisor/snapsbrew.conf). Both give Horizon 130 seconds to stop, because a creative package item can run for 120 seconds. Read [Install without Docker](../getting-started/installation-manual.md#start-the-background-processes).
 
 After you deploy new code, stop Horizon so that the process manager starts it with the new code:
 
