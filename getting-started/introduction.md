@@ -51,6 +51,12 @@ The renderer is [Browserless](https://www.browserless.io/) or Browsershot. Brows
 | API token | A personal access token with the `api_requests` ability. The REST API and the MCP server accept it. |
 | Usage log | The list of the requests and the renders of an account. |
 
+## License
+
+The app is free software under the [GNU Affero General Public License version 3](https://github.com/amedina068/snapsbrew/blob/main/LICENSE) (AGPL-3.0). If you change the app and let people use the changed app over a network, you must offer those people the source code of your changed version. The source code is at [github.com/amedina068/snapsbrew](https://github.com/amedina068/snapsbrew).
+
+The SDKs use the MIT license.
+
 ## Next steps
 
 - To install with Docker, read [Install with Docker](installation-docker.md).

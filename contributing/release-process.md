@@ -14,7 +14,7 @@ A release is a git tag that starts with `v` and holds a semantic version, for ex
 
 TODO(owner): Which branch do we tag?
 
-The workflow builds the image for `linux/amd64` and `linux/arm64`. It pushes the image to the GitHub Container Registry as `ghcr.io/<owner>/snapsbrew`. The workflow sets these image tags:
+The workflow builds the image for `linux/amd64` and `linux/arm64`. It pushes the image to the GitHub Container Registry as `ghcr.io/amedina068/snapsbrew`. The workflow sets these image tags:
 
 | Git tag | Image tags |
 | --- | --- |

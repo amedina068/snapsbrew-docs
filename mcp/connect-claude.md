@@ -58,7 +58,14 @@ Claude Desktop connects through `mcp-remote`. The `mcp-remote` bridge needs Node
 
 3. Restart Claude Desktop.
 
-TODO(owner): Which path of the Claude Desktop configuration file do we document for each operating system?
+The configuration file is `claude_desktop_config.json`:
+
+| Operating system | Path |
+| --- | --- |
+| macOS | `~/Library/Application Support/Claude/claude_desktop_config.json` |
+| Windows | `%APPDATA%\Claude\claude_desktop_config.json` |
+
+To open the file from Claude Desktop, open **Settings > Developer** and click **Edit Config**. If the file does not exist, Claude Desktop creates it.
 
 ## Claude custom connector
 
@@ -70,20 +77,25 @@ The owner of the instance does these steps one time.
 
 1. Make sure that the Passport keys exist. Read [OAuth for the MCP server](oauth.md#passport-keys).
 2. Make sure that `MCP_REDIRECT_DOMAINS` includes the Claude hosts. The default value is `https://claude.ai,https://claude.com`.
+3. Make sure that the instance is reachable from the public internet over HTTPS, with a certificate that a browser trusts.
 
-TODO(owner): Must the instance be reachable from the public internet for the Claude connector? Do we document this requirement?
+The Claude custom connector connects from the servers of Anthropic, not from your computer. A firewall, a VPN or an IP allowlist in front of `/mcp`, `/oauth/` or `/.well-known/` blocks the connector. If the instance is on a private network, use [Claude Code](#claude-code) or [Claude Desktop](#claude-desktop) with an API token. These clients connect from your computer.
 
 ### Add the connector
 
-1. In Claude, add a custom connector.
-2. Use `https://snapsbrew.example/mcp` as the URL.
-3. If the browser asks you to sign in to Snapsbrew, sign in.
-4. Read the consent screen. It shows the name that the client gave itself, and what the client can do.
-5. To approve the connection, click **Connect**. To refuse it, click **Cancel**.
+1. In Claude, open **Settings > Connectors**.
+2. Click **Add custom connector**.
+3. Type a name, for example `Snapsbrew`, and the URL `https://snapsbrew.example/mcp`. Then click **Add**.
+4. Click **Connect** next to the new connector.
+5. If the browser asks you to sign in to Snapsbrew, sign in.
+6. Read the consent screen. It shows the name that the client gave itself, and what the client can do.
+7. To approve the connection, click **Connect**. To refuse it, click **Cancel**.
 
 The consent screen tells you that Snapsbrew did not review the application. Approve it only if you started the connection yourself.
 
-TODO(owner): What are the exact menu names in Claude to add a custom connector? The app code does not name them.
+On a Team or an Enterprise plan, an owner of the Claude organization adds the custom connector first, in the settings of the organization. Then each member does steps 4 to 7.
+
+Claude can change the names of these menus. The URL and the consent screen stay the same.
 
 ## Make sure that the connection works
 
