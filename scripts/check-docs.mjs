@@ -36,7 +36,13 @@ const appPath = linksOnly ? null : process.env.SNAPSBREW_APP_PATH || null;
 // Folders that hold no published pages.
 const SKIP_DIRS = new Set(['.git', '.github', 'node_modules', 'scripts']);
 // Files at the root that are not pages, so they need no front matter.
-const NON_PAGES = new Set(['README.md', 'CONTRIBUTING.md']);
+const NON_PAGES = new Set([
+  'README.md',
+  'CONTRIBUTING.md',
+  'CODE_OF_CONDUCT.md',
+  'SECURITY.md',
+  'SUPPORT.md',
+]);
 
 // Environment variables that the app does not read, but that a page names
 // on purpose. Each entry says who reads it.
