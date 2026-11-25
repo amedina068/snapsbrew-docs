@@ -150,7 +150,7 @@ If the app checkout has no `docs/api/openapi.yaml`, the script writes a warning 
 
 If the app checkout has a `vendor/` folder, the script reads the command list from `php artisan list`. If not, it reads the command signatures in `app/Console/Commands`.
 
-The CI runs the same script on each push and pull request. If the repository has the secret `SNAPSBREW_APP_TOKEN`, the CI clones the app and runs all the checks. Without the secret, it runs the link check only.
+The CI runs the same script on each push and pull request. The CI clones the public app repository `amedina068/snapsbrew` and runs all the checks.
 
 ## Generate the MCP tools reference
 
