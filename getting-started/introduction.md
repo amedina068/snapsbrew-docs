@@ -1,6 +1,6 @@
 ---
 title: Introduction
-description: What Snapsbrew is, what it does, and how the parts fit together.
+description: What Snapsbrew renders, what you can do with it, the parts of an instance, the words that the docs use, and the license.
 order: 1
 ---
 
