@@ -1,6 +1,6 @@
 ---
 title: Upgrading
-description: Update a Snapsbrew instance to a new version, with Docker or without Docker.
+description: Update a Snapsbrew instance to a new version, in one container, with Compose or without Docker.
 order: 5
 ---
 
@@ -12,9 +12,28 @@ CAUTION: Make a backup of the database and the storage before you upgrade. A mig
 
 Read the [Release notes](release-notes.md) before you upgrade. For the changes to the code of each version, read the `CHANGELOG.md` file of the app repository.
 
-TODO(owner): Which version do you tell people to use, a tag or `main`?
+Use the newest version tag. Each version tag publishes the Docker image, and the `latest` image tag follows the newest version.
 
-## Upgrade with Docker
+## Upgrade the container
+
+1. Make a backup of the `/data` volume. Read [Backups](../self-hosting/backups.md).
+2. Run the installer again. It pulls the new image, replaces the container and keeps the volume:
+
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/amedina068/snapsbrew/main/install.sh | bash
+   ```
+
+To upgrade without the installer, pull the image and start a new container with the same volume and the same options:
+
+```bash
+docker pull ghcr.io/amedina068/snapsbrew
+docker rm -f snapsbrew
+docker run -d --name snapsbrew --restart unless-stopped -p 8080:8080 -v snapsbrew:/data ghcr.io/amedina068/snapsbrew
+```
+
+The container runs the new migrations when it starts. To stay on one version, use an exact tag, for example `ghcr.io/amedina068/snapsbrew:0.1.0`.
+
+## Upgrade a Compose install
 
 1. Make a backup of the `mysql` and `storage` volumes.
 2. Get the new code:

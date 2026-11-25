@@ -8,8 +8,9 @@ order: 1
 
 Snapsbrew reads its settings from environment variables. Put them in the `.env` file in the root of the app.
 
+- For the one-container install, give each variable with `-e` to `docker run`, for example `-e MAIL_MAILER=smtp`. The container needs no `.env` file. It writes `APP_KEY` and the other secrets to `/data` on the first start.
 - For a server or a local install, start from `.env.example`.
-- For Docker, start from `.env.docker.example`. Every variable of `.env.example` also works there.
+- For Docker Compose, start from `.env.docker.example`. Every variable of `.env.example` also works there.
 
 After you change `.env` on a server that caches the configuration, run `php artisan config:cache` again. With Docker, restart the containers: `docker compose up -d`.
 
@@ -27,6 +28,7 @@ After you change `.env` on a server that caches the configuration, run `php arti
 | `APP_ENV` | `production` | `production` | The environment. Horizon uses 10 worker processes in `production` and 3 in `local`. Another value starts no Horizon worker. |
 | `APP_KEY` | none | none | The encryption key. Make it with `php artisan key:generate`. The setup token and the stored signed-URL keys depend on it. |
 | `APP_DEBUG` | `false` | `false` | Shows the error details in the browser. Set `true` only for local development. |
+| `APP_DOMAIN` | none | | The domain of the instance, for example `snapsbrew.example`. With it, the container serves HTTPS on ports 80 and 443 through Caddy. The app derives `APP_URL`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS` and `SESSION_SECURE_COOKIE` from it. |
 | `APP_URL` | `http://localhost` | `http://localhost:8000` | The public URL of the instance. Links, the API docs, the signed URLs and the URLs of the `public` disk use it. |
 | `APP_PREVIOUS_URLS` | empty | empty | Earlier hosts of the instance, comma separated. Embedded form URLs that the app signed on one of these hosts keep working. |
 | `APP_PORT` | `8080` | | Docker only. The host port of the `web` container. It is in `.env.docker.example`. |

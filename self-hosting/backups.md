@@ -1,12 +1,46 @@
 ---
 title: Backups
-description: What to back up on a Snapsbrew instance, and how to back up and restore a Docker install.
+description: What to back up on a Snapsbrew instance, and how to back up and restore the /data volume or a Compose install.
 order: 7
 ---
 
 # Backups
 
-Snapsbrew keeps its data in four places. Back up all four.
+## Back up the container
+
+The one-container install keeps all its data in the `/data` volume: the SQLite database, the rendered images, the uploads, the Passport keys and the generated secrets with `APP_KEY`. Back up this one volume.
+
+1. Stop the container, so that the database file does not change during the copy:
+
+   ```bash
+   docker stop snapsbrew
+   ```
+
+2. Copy the volume to a file:
+
+   ```bash
+   docker run --rm -v snapsbrew:/data -v "$PWD":/backup alpine tar czf /backup/snapsbrew-$(date +%F).tar.gz -C /data .
+   ```
+
+3. Start the container:
+
+   ```bash
+   docker start snapsbrew
+   ```
+
+To restore, stop the container, extract the file into the volume, and start the container:
+
+```bash
+docker stop snapsbrew
+docker run --rm -v snapsbrew:/data -v "$PWD":/backup alpine sh -c 'cd /data && tar xzf /backup/snapsbrew-2026-11-25.tar.gz'
+docker start snapsbrew
+```
+
+If `MEDIA_DISK` is a bucket, also back up the bucket.
+
+## A Compose install or an install without Docker
+
+These installs keep their data in four places. Back up all four.
 
 | What | Where | Why it is important |
 |---|---|---|
@@ -33,7 +67,7 @@ Keep `.env` out of a public place. It holds `APP_KEY` and all other secrets.
 
 The OAuth flow of the MCP server signs tokens with the Passport keys. The keys are `storage/oauth-private.key` and `storage/oauth-public.key`, or the values of `PASSPORT_PRIVATE_KEY` and `PASSPORT_PUBLIC_KEY`. If you lose the keys, every MCP client that connected with OAuth must connect again.
 
-## Back up a Docker install
+## Back up a Compose install
 
 Docker Compose adds the project name to each volume name. The project name is the name of the folder by default. The examples use the project name `snapsbrew`, so the volumes are `snapsbrew_mysql` and `snapsbrew_storage`.
 
@@ -53,7 +87,7 @@ Docker Compose adds the project name to each volume name. The project name is th
 
 The `mysqldump` with `--single-transaction` makes a consistent copy while the app runs.
 
-## Restore a Docker install
+## Restore a Compose install
 
 1. Stop the app containers:
 

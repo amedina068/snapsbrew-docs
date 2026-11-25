@@ -20,10 +20,12 @@ Each user belongs to one company. Templates, snaps, forms and tokens belong to t
 
 The first account of an instance is the owner. Create it in one of two ways:
 
-- **The setup page.** Open `/setup?token=<token>`. Run `php artisan snapsbrew:setup-url` to show the full URL. The Docker `web` container also prints it to its log.
-- **The command line.** Run `php artisan snapsbrew:install`. The command asks for the name, the email and the password. You can also give `--name`, `--email`, `--password` and `--company`.
+- **The setup page.** Open `/setup?token=<token>`. The container prints the full URL as the last line of its log. Run `php artisan snapsbrew:setup-url` to show it again.
+- **The command line.** Run `php artisan snapsbrew:install --name="Ada Lovelace" --email=ada@example.com`. You can also give `--company`. The command does not take a password. It returns a one-time `login_url`, and the owner sets a password after the first login. With `--with-token=<name>`, it also returns an API token and a ready `claude mcp add` line.
 
-The setup page is open only while the `users` table is empty. While no user exists, `/`, `/login` and `/register` send the visitor to `/setup`. After the first account exists, `/setup` returns 404.
+The setup page is open only while the `users` table is empty. While no user exists, `/`, `/login` and `/register` send the visitor to `/setup`. Without a correct token, `/setup` shows how to get the setup URL. After the first account exists, `/setup` returns 404.
+
+The setup page and the command already ask for the name and the company, so the owner skips the onboarding wizard and goes to the dashboard.
 
 The setup token comes from `APP_KEY` through HMAC-SHA256. The instance stores no token. The setup routes accept 10 requests a minute.
 
@@ -75,9 +77,11 @@ The value in **Admin > Settings** wins over `REGISTRATION_ENABLED`.
 
 The app sends an email with a link to `/register?invitation=<token>`. The invitation expires after 7 days. The app refuses a second invitation while the first one is pending. It also refuses an email that is already a member of the company.
 
-The invitation email needs a working mailer. If `MAIL_MAILER` is `log`, the email and its link go to the log. Read [Configuration](configuration.md).
+After each invitation, the page shows the invite link. Each pending invitation has a **Copy invite link** button. You can send the link in a chat message, and the person signs up with it.
 
-New users also see an onboarding page. It can send up to 25 invitations at one time. The onboarding steps close when the user finishes onboarding.
+The invitation email needs a working mailer. If `MAIL_MAILER` is `log`, the app sends no email. The page then says "Mail is not set up. Send this link yourself." If the mailer fails, the invitation stays and the page gives the link. The page says that the invitation went out only when a mail went out. To set up a mailer, read [Configuration](configuration.md).
+
+A user who signs up later sees an onboarding page. It can send up to 25 invitations at one time. If `MAIL_MAILER` is `log`, the last step shows the invite links. The onboarding steps close when the user finishes onboarding.
 
 One company can send 20 invitation emails in 24 hours, from the account page and the onboarding page together. `SNAPSBREW_INVITATIONS_PER_COMPANY_PER_DAY` changes this number.
 

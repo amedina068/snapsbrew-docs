@@ -1,12 +1,24 @@
 ---
 title: Reverse proxy and TLS
-description: Serve Snapsbrew over HTTPS behind Caddy, NGINX or Traefik.
+description: Serve Snapsbrew over HTTPS with APP_DOMAIN, or behind your own Caddy, NGINX or Traefik.
 order: 2
 ---
 
 # Reverse proxy and TLS
 
-Snapsbrew does not terminate TLS itself. The `web` container answers plain HTTP on port 8080. Docker publishes this port on `127.0.0.1` of the host only. To serve HTTPS, put a reverse proxy on the host in front of the app.
+## Automatic HTTPS with APP_DOMAIN
+
+The container serves HTTPS itself when `APP_DOMAIN` is set. Caddy in the container answers on ports 80 and 443, and it gets the certificate on the first request. This is the default of the installer. Read [Install with Docker](../getting-started/installation-docker.md).
+
+With `APP_DOMAIN`, you need no proxy and no `TRUSTED_PROXIES`. Make sure that:
+
+- the DNS A record of the domain points to the server,
+- ports 80 and 443 are open in the firewall,
+- no other program on the server uses ports 80 and 443.
+
+## Your own proxy
+
+Use your own proxy if the server already has one, or if you use Cloudflare in front of the app. Then do not set `APP_DOMAIN`. Publish only port 8080 on `127.0.0.1`, and set `APP_URL` to the public HTTPS URL. The container answers plain HTTP on port 8080. The Compose stack also publishes this port on `127.0.0.1` of the host only.
 
 ## What the app needs from the proxy
 

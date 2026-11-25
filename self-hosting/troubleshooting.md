@@ -18,6 +18,26 @@ order: 11
 
 ## Install and start
 
+### The installer stops with an error
+
+The installer prints an `Error:` line and a `Fix:` line. Do the fix, then run the installer again. The full log is in `/tmp/snapsbrew-install.log`. To see the commands without a change, add `--dry-run`.
+
+### The container stopped
+
+Read the end of its log:
+
+```bash
+docker logs --tail 50 snapsbrew
+```
+
+### The app shows "Snapsbrew is not set up yet"
+
+The instance has no owner, and the URL has no setup token or a wrong one. The last line of the container log is the setup URL. To show it again, run:
+
+```bash
+docker exec snapsbrew php artisan snapsbrew:setup-url
+```
+
 ### `docker compose` stops with "Set DB_PASSWORD in .env"
 
 A required variable is empty. Set `DB_PASSWORD`, `DB_ROOT_PASSWORD` and `BROWSERLESS_TOKEN` in `.env`. Read [Install with Docker](../getting-started/installation-docker.md).
@@ -34,7 +54,7 @@ docker compose logs web
 
 An account exists, so the setup page is closed. Sign in with that account. If you lost its password, read [Recover access](recover-access.md).
 
-### "The setup token is not correct"
+### "The setup token is not correct" or "This setup token is not correct"
 
 The token comes from `APP_KEY`. If `APP_KEY` changed after you copied the URL, the old token does not work. Show the current URL:
 
