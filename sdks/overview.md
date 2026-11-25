@@ -17,7 +17,7 @@ This page describes version 0.2.0 of each library, on the `main` branch of its r
 | Python | `amedina068/snapsbrew-python` | `snapsbrew` | Python 3.10, 3.11, 3.12, 3.13 and 3.14 |
 | Ruby | `amedina068/snapsbrew-ruby` | `snapsbrew` | Ruby 3.2, 3.3 and 3.4. Rails 7.2, 8.0 and 8.1 are optional. |
 
-The packages are not on npm, Packagist, PyPI or RubyGems yet. Version 0.2.0 has no release and no version tag. Install each package from its git repository. The repositories are private on GitHub, so you need read access to the repository of your language.
+The packages are not on npm, Packagist, PyPI or RubyGems yet. Version 0.2.0 has no release and no version tag. Install each package from its public git repository on GitHub.
 
 | Language | Install from git |
 |---|---|
@@ -166,7 +166,7 @@ The package runs on Node.js, Bun, Deno and Cloudflare Workers. It has no runtime
 npm install github:amedina068/snapsbrew-js
 ```
 
-For Bun, run `bun add github:amedina068/snapsbrew-js`. Your git client must have access to the private repository, for example through an SSH key or `gh auth login`.
+For Bun, run `bun add github:amedina068/snapsbrew-js`.
 
 The `prepare` script of the package builds the package during the install. The build tools need Node.js 22.18 or later. The built package runs on Node.js 20.
 
@@ -411,7 +411,7 @@ Then install the `main` branch:
 composer require snapsbrew/snapsbrew-php:dev-main
 ```
 
-The repository has no version tag. Without `:dev-main`, Composer looks for a stable version and finds none. If Composer cannot read the private repository, give Composer a GitHub token:
+The repository has no version tag. Without `:dev-main`, Composer looks for a stable version and finds none. If GitHub limits the API requests of Composer, give Composer a GitHub token:
 
 ```bash
 composer config --global github-oauth.github.com <your-token>
@@ -627,7 +627,7 @@ The package has one dependency, `httpx`. It has a sync client, `Snapsbrew`, and 
 pip install "git+https://github.com/amedina068/snapsbrew-python.git"
 ```
 
-With uv, run `uv add "git+https://github.com/amedina068/snapsbrew-python.git"`. Git must have access to the private repository, for example with an SSH key or with `gh auth setup-git`. To install a fixed commit, add `@<commit>` to the URL.
+With uv, run `uv add "git+https://github.com/amedina068/snapsbrew-python.git"`. To install a fixed commit, add `@<commit>` to the URL.
 
 ### Requirements
 
@@ -810,7 +810,7 @@ Add the gem to your Gemfile:
 gem "snapsbrew", github: "amedina068/snapsbrew-ruby"
 ```
 
-Then run `bundle install`. Bundler installs the gem from the `main` branch. Git must have access to the private repository, for example through `gh auth setup-git`.
+Then run `bundle install`. Bundler installs the gem from the `main` branch.
 
 ### Requirements
 
