@@ -43,7 +43,6 @@ const NON_PAGES = new Set(['README.md', 'CONTRIBUTING.md']);
 const EXTERNAL_ENV = new Map([
   ['PUPPETEER_EXECUTABLE_PATH', 'read by Puppeteer, not by the app'],
   ['SNAPSBREW_APP_PATH', 'read by the scripts of this repository'],
-  ['SNAPSBREW_APP_TOKEN', 'a secret of the CI of this repository'],
   ['SNAPSBREW_SIGNING_KEY', 'read by the SDKs, not by the app'],
   ['SNAPSBREW_TOKEN', 'read by the SDKs, not by the app'],
   ['SNAPSBREW_URL', 'read by the SDKs, not by the app'],
