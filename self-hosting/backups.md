@@ -44,9 +44,9 @@ These installs keep their data in four places. Back up all four.
 
 | What | Where | Why it is important |
 |---|---|---|
-| The database | MySQL (the `mysql` volume in Docker) | Accounts, templates, template versions, snaps, forms, tokens and the usage log. |
-| The storage folder | `storage/` (the `storage` volume in Docker) | Rendered images and uploads on the `public` disk, editor assets, uploaded spreadsheets, the Passport keys and the logs. |
-| The `.env` file | The root of the app | All settings, and `APP_KEY`. |
+| The database | MySQL (the `mysql` volume of the `mysql` profile in Docker) | Accounts, templates, template versions, snaps, forms, tokens and the usage log. |
+| The storage folder | `storage/` (the `data` volume in Docker, at `/data/storage`) | Rendered images and uploads on the `public` disk, editor assets, uploaded spreadsheets, the Passport keys and the logs. |
+| The `.env` file | The root of the app | All settings. In Docker, `APP_KEY` is in the `data` volume, at `/data/.secrets/app_key`. |
 | The bucket | S3, Spaces or R2 | Rendered images and uploads, if `MEDIA_DISK` is a bucket. |
 
 Redis holds the cache, the sessions and the queued jobs. If you lose Redis, users must sign in again and the queued jobs are lost. A backup of Redis is not necessary for most instances.
@@ -69,42 +69,42 @@ The OAuth flow of the MCP server signs tokens with the Passport keys. The keys a
 
 ## Back up a Compose install
 
-Docker Compose adds the project name to each volume name. The project name is the name of the folder by default. The examples use the project name `snapsbrew`, so the volumes are `snapsbrew_mysql` and `snapsbrew_storage`.
+Docker Compose adds the project name to each volume name. The project name is the name of the folder by default. The examples use the project name `snapsbrew`, so the volumes are `snapsbrew_mysql` and `snapsbrew_data`.
 
 1. Dump the database:
 
    ```bash
-   docker compose exec -T mysql sh -c 'exec mysqldump --single-transaction -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' > snapsbrew.sql
+   docker compose exec -T mysql sh -c 'exec mysqldump --single-transaction --no-tablespaces -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' > snapsbrew.sql
    ```
 
-2. Copy the `storage` volume to an archive:
+2. Copy the `data` volume to an archive:
 
    ```bash
-   docker run --rm -v snapsbrew_storage:/data -v "$PWD":/backup alpine tar czf /backup/storage.tar.gz -C /data .
+   docker run --rm -v snapsbrew_data:/data -v "$PWD":/backup alpine tar czf /backup/data.tar.gz -C /data .
    ```
 
 3. Copy `.env` to the same safe place as the two files.
 
-The `mysqldump` with `--single-transaction` makes a consistent copy while the app runs.
+The `mysqldump` with `--single-transaction` makes a consistent copy while the app runs. The app user of the `mysql` service has no `PROCESS` privilege, so the command needs `--no-tablespaces`. The root password of the `mysql` service is random, and nobody needs it.
 
 ## Restore a Compose install
 
-1. Stop the app containers:
+1. Stop the app container:
 
    ```bash
-   docker compose stop web horizon scheduler
+   docker compose stop web
    ```
 
 2. Load the database dump:
 
    ```bash
-   docker compose exec -T mysql sh -c 'exec mysql -u root -p"$MYSQL_ROOT_PASSWORD" "$MYSQL_DATABASE"' < snapsbrew.sql
+   docker compose exec -T mysql sh -c 'exec mysql -u "$MYSQL_USER" -p"$MYSQL_PASSWORD" "$MYSQL_DATABASE"' < snapsbrew.sql
    ```
 
-3. Load the storage archive into the volume:
+3. Load the `data` archive into the volume:
 
    ```bash
-   docker run --rm -v snapsbrew_storage:/data -v "$PWD":/backup alpine sh -c 'cd /data && tar xzf /backup/storage.tar.gz'
+   docker run --rm -v snapsbrew_data:/data -v "$PWD":/backup alpine sh -c 'cd /data && tar xzf /backup/data.tar.gz'
    ```
 
 4. Put the saved `.env` back in the root of the app.

@@ -35,7 +35,7 @@ The container runs the new migrations when it starts. To stay on one version, us
 
 ## Upgrade a Compose install
 
-1. Make a backup of the `mysql` and `storage` volumes.
+1. Make a backup of the `mysql` and `data` volumes.
 2. Get the new code:
 
    ```bash
@@ -54,7 +54,7 @@ The container runs the new migrations when it starts. To stay on one version, us
    docker compose ps
    ```
 
-The `web` container runs the new migrations when it starts. Horizon and the scheduler start again after `web` is healthy.
+The `web` container runs the new migrations when it starts. Horizon and the scheduler run inside the `web` container.
 
 If `docker-compose.yml` changes the Browserless image tag, Compose pulls the new image. The renderer code and the Browserless tag change together, because a new Browserless major version can change the `/screenshot` payload.
 

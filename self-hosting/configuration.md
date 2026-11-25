@@ -60,7 +60,6 @@ The app ships no privacy policy and no terms of service. If your instance is pub
 | `DB_DATABASE` | `forge` (`database/database.sqlite` for SQLite) | commented out | The database name, or the SQLite file. |
 | `DB_USERNAME` | `forge` | commented out | The database user. |
 | `DB_PASSWORD` | empty | commented out | The database password. |
-| `DB_ROOT_PASSWORD` | none | | Docker only. The MySQL root password of the `mysql` container. |
 | `DB_SOCKET` | empty | | A MySQL Unix socket. |
 | `DB_FOREIGN_KEYS` | `true` | | Turns on the foreign keys of SQLite. |
 | `DATABASE_URL` | none | | A full database URL instead of the separate values. |

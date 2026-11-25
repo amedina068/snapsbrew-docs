@@ -10,7 +10,7 @@ order: 11
 
 | Source | How to read it |
 |---|---|
-| The app log (Docker) | `docker compose logs web horizon scheduler`. The Docker image sets `LOG_CHANNEL=stderr`. |
+| The app log (Docker) | `docker logs snapsbrew`, or `docker compose logs web` for a Compose install. The Docker image sets `LOG_CHANNEL=stderr`. |
 | The app log (no Docker) | The daily files in `storage/logs/`. |
 | Failed jobs | The Horizon dashboard at `/horizon`, as the owner. |
 | One API request | The `X-Request-Uuid` header of a snap, batch or embedded form response. It is the uuid of the usage log row. Open `/logs/<uuid>` to read the row. |
@@ -38,9 +38,9 @@ The instance has no owner, and the URL has no setup token or a wrong one. The la
 docker exec snapsbrew php artisan snapsbrew:setup-url
 ```
 
-### `docker compose` stops with "Set DB_PASSWORD in .env"
+### The log says "The mysql service runs, but DB_CONNECTION is sqlite"
 
-A required variable is empty. Set `DB_PASSWORD`, `DB_ROOT_PASSWORD` and `BROWSERLESS_TOKEN` in `.env`. Read [Install with Docker](../getting-started/installation-docker.md).
+The `mysql` profile runs, but `.env` does not have the MySQL block of `.env.docker.example`. The app uses SQLite in `/data`. Add the MySQL block to `.env`, then run `docker compose up -d`. Read [MySQL, Redis and Browserless](../getting-started/installation-docker.md#mysql-redis-and-browserless).
 
 ### The `web` container is not healthy
 

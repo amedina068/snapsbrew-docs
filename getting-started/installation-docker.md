@@ -132,18 +132,61 @@ docker build -t ghcr.io/amedina068/snapsbrew .
 
 ## MySQL, Redis and Browserless
 
-SQLite in `/data` is enough for one server. For MySQL 8.4, Redis and a separate Browserless renderer, use `docker-compose.yml` of the app repository with the `mysql` profile:
+SQLite in `/data` is enough for one server. For MySQL 8.4, Redis and a separate Browserless renderer, use `docker-compose.yml` of the app repository. Its `mysql` profile adds the three services, and the web container then runs Horizon instead of `queue:work`.
 
-```bash
-git clone https://github.com/amedina068/snapsbrew.git
-cd snapsbrew
-cp .env.example .env
-docker compose --profile mysql up -d
-```
+1. Clone the app repository:
 
-Set `APP_DOMAIN` in `.env` before you start the stack. With Compose, add `docker compose exec web` before each `php artisan` command, and read the setup URL with `docker compose logs web`.
+   ```bash
+   git clone https://github.com/amedina068/snapsbrew.git
+   cd snapsbrew
+   ```
 
-Browserless renders inside its own container. If a template loads an image from your instance, Browserless gets that image through `APP_URL`. A public domain works. A `localhost` URL does not work for these images. Read [Rendering](../self-hosting/rendering.md).
+2. Make the `.env` file. The command copies `.env.docker.example` and adds its MySQL block with two new passwords:
+
+   ```bash
+   cp .env.docker.example .env
+   cat >> .env <<EOF
+   COMPOSE_PROFILES=mysql
+   DB_CONNECTION=mysql
+   DB_HOST=mysql
+   DB_PORT=3306
+   DB_DATABASE=snapsbrew
+   DB_USERNAME=snapsbrew
+   DB_PASSWORD=$(openssl rand -hex 24)
+   REDIS_HOST=redis
+   REDIS_PASSWORD=null
+   CACHE_DRIVER=redis
+   QUEUE_CONNECTION=redis
+   SESSION_DRIVER=redis
+   RENDER_DRIVER=browserless
+   BROWSERLESS_URL=http://browserless:3000
+   RENDER_ASSET_URL=http://web:8080
+   BROWSERLESS_TOKEN=$(openssl rand -hex 24)
+   EOF
+   ```
+
+3. For a domain, add `APP_DOMAIN=snapsbrew.example` to `.env`. Then add `"80:80"` and `"443:443"` to the `ports` of the `web` service in `docker-compose.yml`. For localhost, skip this step.
+4. Build and start the stack:
+
+   ```bash
+   docker compose up -d --build
+   docker compose logs -f web
+   ```
+
+5. Wait for the line `Snapsbrew is ready`. The next line is the setup URL. Open it and create the owner account.
+
+On the first start, the web container waits for MySQL and loads the schema. This takes about 90 seconds.
+
+| Variable | Why it is necessary |
+|---|---|
+| `COMPOSE_PROFILES=mysql` | Starts the `mysql`, `redis` and `browserless` services. Then `docker compose` needs no `--profile` flag. |
+| `DB_CONNECTION=mysql` and the other `DB_` values | Without them, the web container uses SQLite in `/data`, and the log shows a warning. |
+| `DB_PASSWORD` | The `mysql` service creates the app user with this password. |
+| `QUEUE_CONNECTION=redis` | Horizon runs the queue. With another value, the container runs `queue:work`. |
+| `RENDER_DRIVER=browserless` and `BROWSERLESS_TOKEN` | The renders go to the Browserless container. The token is its only protection. |
+| `RENDER_ASSET_URL=http://web:8080` | Browserless gets the images and the fonts of a snap from the web container through this address. With it, a `localhost` install renders images from its own storage. |
+
+With Compose, add `docker compose exec web` before each `php artisan` command, for example `docker compose exec web php artisan snapsbrew:setup-url`. Read [Rendering](../self-hosting/rendering.md).
 
 ## Next steps
 
