@@ -74,7 +74,7 @@ const FRAMEWORK_COMMANDS = [
   'about', 'config:cache', 'config:clear', 'db:seed', 'down', 'horizon',
   'horizon:terminate', 'horizon:status', 'key:generate', 'list', 'mcp:inspector', 'migrate',
   'migrate:fresh', 'migrate:status', 'optimize', 'optimize:clear',
-  'passport:keys', 'queue:failed', 'queue:retry', 'queue:work', 'route:cache',
+  'passport:keys', 'queue:failed', 'queue:restart', 'queue:retry', 'queue:work', 'route:cache',
   'route:clear', 'route:list', 'schedule:list', 'schedule:run',
   'schedule:work', 'serve', 'storage:link', 'test', 'tinker', 'up',
   'view:cache', 'view:clear', 'vendor:publish', 'package:discover',
@@ -374,8 +374,12 @@ function loadCommands(app) {
   const names = new Set();
   if (existsSync(join(app, 'vendor', 'autoload.php'))) {
     try {
+      // The app loads Horizon only when QUEUE_CONNECTION is `redis`. The docs
+      // name the Horizon commands for the Redis install, so set it here.
+      // `artisan list` does not connect to Redis, so no Redis server is needed.
       const json = execFileSync('php', ['artisan', 'list', '--format=json', '--no-ansi'], {
         cwd: app,
+        env: { ...process.env, QUEUE_CONNECTION: 'redis' },
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
       });
@@ -415,8 +419,8 @@ function loadEnvKeys(app) {
     add(/env\(\s*'([A-Z][A-Z0-9_]*)'/g, read(file));
   }
 
-  // Docker and deploy files: KEY: value, KEY=value and ${KEY}.
-  const dockerFiles = [join(app, 'docker-compose.yml'), join(app, 'Dockerfile'), ...listFiles(join(app, 'deploy'))];
+  // Docker, deploy and installer files: KEY: value, KEY=value and ${KEY}.
+  const dockerFiles = [join(app, 'docker-compose.yml'), join(app, 'Dockerfile'), join(app, 'install.sh'), ...listFiles(join(app, 'deploy'))];
   for (const file of dockerFiles) {
     const text = read(file);
     add(/^\s*-?\s*([A-Z][A-Z0-9_]*)\s*[:=]/gm, text);

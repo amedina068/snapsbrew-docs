@@ -140,7 +140,7 @@ SNAPSBREW_APP_PATH=../snapsbrew node scripts/check-docs.mjs
 The script then makes sure that:
 
 - each `php artisan <command>` in a page exists in the app,
-- each environment variable in the code of a page exists in `.env.example`, `.env.docker.example`, `config/`, the Docker files or `deploy/` of the app,
+- each environment variable in the code of a page exists in `.env.example`, `.env.docker.example`, `config/`, the Docker files, `install.sh` or `deploy/` of the app,
 - each `METHOD /path` on an API page (`api/*.md`) exists in `docs/api/openapi.yaml` of the app,
 - each operation of `docs/api/openapi.yaml` is on an API page,
 - each internal link and each anchor resolves.

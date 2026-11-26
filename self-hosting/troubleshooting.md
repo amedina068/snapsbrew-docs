@@ -10,17 +10,37 @@ order: 11
 
 | Source | How to read it |
 |---|---|
-| The app log (Docker) | `docker compose logs web horizon scheduler`. The Docker image sets `LOG_CHANNEL=stderr`. |
+| The app log (Docker) | `docker logs snapsbrew`, or `docker compose logs web` for a Compose install. The Docker image sets `LOG_CHANNEL=stderr`. |
 | The app log (no Docker) | The daily files in `storage/logs/`. |
-| Failed jobs | The Horizon dashboard at `/horizon`, as the owner. |
+| Failed jobs | `php artisan queue:failed`. With the `redis` queue, also the Horizon dashboard at `/horizon`, as the owner. |
 | One API request | The `X-Request-Uuid` header of a snap, batch or embedded form response. It is the uuid of the usage log row. Open `/logs/<uuid>` to read the row. |
 | The usage log | `/logs` in the app. |
 
 ## Install and start
 
-### `docker compose` stops with "Set DB_PASSWORD in .env"
+### The installer stops with an error
 
-A required variable is empty. Set `DB_PASSWORD`, `DB_ROOT_PASSWORD` and `BROWSERLESS_TOKEN` in `.env`. Read [Install with Docker](../getting-started/installation-docker.md).
+The installer prints an `Error:` line and a `Fix:` line. Do the fix, then run the installer again. The full log is in `/tmp/snapsbrew-install.log`. To see the commands without a change, add `--dry-run`.
+
+### The container stopped
+
+Read the end of its log:
+
+```bash
+docker logs --tail 50 snapsbrew
+```
+
+### The app shows "Snapsbrew is not set up yet"
+
+The instance has no owner, and the URL has no setup token or a wrong one. The last line of the container log is the setup URL. To show it again, run:
+
+```bash
+docker exec snapsbrew php artisan snapsbrew:setup-url
+```
+
+### The log says "The mysql service runs, but DB_CONNECTION is sqlite"
+
+The `mysql` profile runs, but `.env` does not have the MySQL block of `.env.docker.example`. The app uses SQLite in `/data`. Add the MySQL block to `.env`, then run `docker compose up -d`. Read [MySQL, Redis and Browserless](../getting-started/installation-docker.md#mysql-redis-and-browserless).
 
 ### The `web` container is not healthy
 
@@ -34,7 +54,7 @@ docker compose logs web
 
 An account exists, so the setup page is closed. Sign in with that account. If you lost its password, read [Recover access](recover-access.md).
 
-### "The setup token is not correct"
+### "The setup token is not correct" or "This setup token is not correct"
 
 The token comes from `APP_KEY`. If `APP_KEY` changed after you copied the URL, the old token does not work. Show the current URL:
 
@@ -49,8 +69,9 @@ php artisan snapsbrew:setup-url
 The queue worker does not run.
 
 1. If `QUEUE_CONNECTION` is `redis`, make sure that Horizon runs. With Docker, read `docker compose ps`.
-2. Make sure that `APP_ENV` is `production` or `local`. With another value, Horizon starts no worker.
-3. Open `/horizon` and look for failed jobs.
+2. If `QUEUE_CONNECTION` is `database`, make sure that `php artisan queue:work` runs. The Docker container starts it.
+3. If `QUEUE_CONNECTION` is `redis`, make sure that `APP_ENV` is `production` or `local`. With another value, Horizon starts no worker.
+4. Run `php artisan queue:failed` and look for failed jobs.
 
 Read [Queues and Horizon](queues-and-horizon.md).
 
@@ -140,6 +161,8 @@ The app answers `400` to a host that is not the host of `APP_URL`, a host in `AP
 `MAIL_MAILER=log` writes each email to the log and sends nothing. Configure a mailer, or use the commands in [Recover access](recover-access.md).
 
 ### `/horizon` or `/admin` returns 404 or 403
+
+`/horizon` exists only when `QUEUE_CONNECTION` is `redis`. With another value, it returns 404.
 
 Only the owner can open these pages. Sign in as the owner, or make a user the owner with `php artisan snapsbrew:install --promote=<email>`.
 
