@@ -368,8 +368,12 @@ function loadCommands(app) {
   const names = new Set();
   if (existsSync(join(app, 'vendor', 'autoload.php'))) {
     try {
+      // The app loads Horizon only when QUEUE_CONNECTION is `redis`. The docs
+      // name the Horizon commands for the Redis install, so set it here.
+      // `artisan list` does not connect to Redis, so no Redis server is needed.
       const json = execFileSync('php', ['artisan', 'list', '--format=json', '--no-ansi'], {
         cwd: app,
+        env: { ...process.env, QUEUE_CONNECTION: 'redis' },
         encoding: 'utf8',
         stdio: ['ignore', 'pipe', 'pipe'],
       });
