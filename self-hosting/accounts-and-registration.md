@@ -34,7 +34,7 @@ A user gets a company role when the account is created:
 - The user who creates a company is its owner. The owner from `/setup` or `snapsbrew:install` is the owner of the first company.
 - With open registration, each new account gets a new company. The new user is the owner of that company.
 - A user who signs up with an invitation joins the company as a member.
-- An upgrade from a version without company roles runs a migration. The migration makes the first user of each company the owner. Every other user becomes a member.
+- An upgrade from a version without company roles runs a migration. The migration makes the first active user of each company the owner. If no user of the company is active, the first user becomes the owner. Every other user becomes a member.
 
 ### Make a member an owner
 
@@ -45,13 +45,47 @@ A user gets a company role when the account is created:
 
 A company can have more than one owner. To make an owner a member, click **Make member** on the row of the owner.
 
-No command changes a company role. `php artisan snapsbrew:user:list --json` and the `list-users` tool of the instance-admin MCP server show the `company_role` of each user. **Admin > Users** shows it too.
+`php artisan snapsbrew:user:list --json` and the `list-users` tool of the instance-admin MCP server show the `company_role` of each user. **Admin > Users** shows it too.
 
-### The last owner
+### Set a company role from the command line
 
-A company always keeps at least one owner. The last owner cannot become a member. Its row on **Account > Users** shows "The last owner stays an owner." To hand over a company, make the new user an owner first. Then make the old owner a member.
+The instance owner can set a company role without a browser. To make a user an owner, run:
 
-If the instance owner deletes the last owner of a company, the oldest account of that company becomes the owner.
+```bash
+php artisan snapsbrew:user:role person@example.com owner
+```
+
+To make an owner a member, use `member` instead of `owner`. With Docker, add `docker compose exec web` before the command. The command uses the same rules as **Account > Users**.
+
+With `--json`, stdout holds one JSON object. The exit codes are:
+
+| Exit code | Meaning |
+|---|---|
+| 0 | The role changed, or the user already had this role. |
+| 2 | Bad input: no user has the email, the role is not `owner` or `member`, or the user has no company. |
+| 3 | The user is the last active owner of the company. |
+
+### The last active owner
+
+An active owner is an owner who is not deactivated. A company that has active users always keeps at least one active owner. A deactivated owner does not count.
+
+- The last active owner cannot become a member. Its row on **Account > Users** shows "The last active owner stays an owner."
+- `snapsbrew:user:role` refuses the same change with exit code 3.
+- The instance owner cannot deactivate the last active owner. Read [Deactivate a user](#deactivate-a-user).
+
+To hand over a company, make the new user an owner first. Then make the old owner a member.
+
+If the instance owner deletes the last owner of a company, the oldest active account of that company becomes the owner.
+
+### A company with no active owner
+
+A company can have active users but no active owner. For example, the owner of a company was deactivated before this rule existed. Nobody in such a company can change the roles.
+
+`php artisan snapsbrew:doctor` reports each of these companies in the check `company_owners`. The fix line gives one command for each company. To correct a company, run this command with the email of an active user of the company:
+
+```bash
+php artisan snapsbrew:user:role person@example.com owner
+```
 
 ## Create the owner
 
@@ -147,6 +181,8 @@ The owner can deactivate a user in **Admin > Users**. A deactivated user keeps a
 To restore access, click **Reactivate**. The tokens, the signed URLs and the forms of the user work again.
 
 The owner cannot deactivate an owner. The request returns 403.
+
+The owner cannot deactivate the last active owner of a company while the company has other active users. The page shows an error. Make another active user of the company an owner first. Then deactivate the user. If the company has no other active user, the deactivation works.
 
 ## Delete a user
 
