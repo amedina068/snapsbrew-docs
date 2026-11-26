@@ -1,5 +1,8 @@
 # Snapsbrew documentation
 
+[![CI](https://github.com/amedina068/snapsbrew-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/amedina068/snapsbrew-docs/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/amedina068/snapsbrew-docs/badge)](https://scorecard.dev/viewer/?uri=github.com/amedina068/snapsbrew-docs)
+
 This repository holds the documentation of [Snapsbrew](https://snapsbrew.com), a self-hosted app that renders images and PDFs from templates.
 
 The marketing site renders these files at [snapsbrew.com/docs](https://snapsbrew.com/docs). Each Markdown file is one page. The folder of a file is the section of the page.

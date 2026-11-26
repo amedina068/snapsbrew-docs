@@ -1,5 +1,11 @@
 blank_issues_enabled: false
 contact_links:
-  - name: A problem with the app itself
-    url: https://snapsbrew.com/docs/self-hosting/troubleshooting
-    about: Read the troubleshooting page first. A bug in the app belongs in the app repository, not here.
+  - name: Question
+    url: https://github.com/amedina068/snapsbrew/discussions/categories/q-a
+    about: Ask a question in the Q&A category of the Discussions of the app repository. Do not open an issue for a question.
+  - name: Documentation
+    url: https://snapsbrew.com/docs
+    about: Read the published documentation. For a problem with the app, read the troubleshooting page first.
+  - name: Bug in the Snapsbrew server
+    url: https://github.com/amedina068/snapsbrew/issues
+    about: A bug in the app belongs in the app repository, not here. Read https://snapsbrew.com/docs/self-hosting/troubleshooting first.

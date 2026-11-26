@@ -1,0 +1,24 @@
+name: Missing information
+description: The docs do not explain a feature, a setting or a task.
+title: "Missing docs: "
+labels: ["documentation", "needs-triage"]
+body:
+  - type: textarea
+    id: what-you-tried
+    attributes:
+      label: What you tried to do
+      description: The task, for example "use a Cloudflare R2 bucket with a custom domain".
+    validations:
+      required: true
+  - type: textarea
+    id: where-you-looked
+    attributes:
+      label: Where you looked
+      description: The pages that you read.
+  - type: textarea
+    id: what-was-missing
+    attributes:
+      label: What was missing
+      description: The question that the docs did not answer.
+    validations:
+      required: true
