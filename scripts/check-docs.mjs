@@ -68,7 +68,7 @@ const FRAMEWORK_COMMANDS = [
   'about', 'config:cache', 'config:clear', 'db:seed', 'down', 'horizon',
   'horizon:terminate', 'horizon:status', 'key:generate', 'list', 'mcp:inspector', 'migrate',
   'migrate:fresh', 'migrate:status', 'optimize', 'optimize:clear',
-  'passport:keys', 'queue:failed', 'queue:retry', 'queue:work', 'route:cache',
+  'passport:keys', 'queue:failed', 'queue:restart', 'queue:retry', 'queue:work', 'route:cache',
   'route:clear', 'route:list', 'schedule:list', 'schedule:run',
   'schedule:work', 'serve', 'storage:link', 'test', 'tinker', 'up',
   'view:cache', 'view:clear', 'vendor:publish', 'package:discover',

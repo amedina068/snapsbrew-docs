@@ -12,7 +12,7 @@ order: 11
 |---|---|
 | The app log (Docker) | `docker logs snapsbrew`, or `docker compose logs web` for a Compose install. The Docker image sets `LOG_CHANNEL=stderr`. |
 | The app log (no Docker) | The daily files in `storage/logs/`. |
-| Failed jobs | The Horizon dashboard at `/horizon`, as the owner. |
+| Failed jobs | `php artisan queue:failed`. With the `redis` queue, also the Horizon dashboard at `/horizon`, as the owner. |
 | One API request | The `X-Request-Uuid` header of a snap, batch or embedded form response. It is the uuid of the usage log row. Open `/logs/<uuid>` to read the row. |
 | The usage log | `/logs` in the app. |
 
@@ -69,8 +69,9 @@ php artisan snapsbrew:setup-url
 The queue worker does not run.
 
 1. If `QUEUE_CONNECTION` is `redis`, make sure that Horizon runs. With Docker, read `docker compose ps`.
-2. Make sure that `APP_ENV` is `production` or `local`. With another value, Horizon starts no worker.
-3. Open `/horizon` and look for failed jobs.
+2. If `QUEUE_CONNECTION` is `database`, make sure that `php artisan queue:work` runs. The Docker container starts it.
+3. If `QUEUE_CONNECTION` is `redis`, make sure that `APP_ENV` is `production` or `local`. With another value, Horizon starts no worker.
+4. Run `php artisan queue:failed` and look for failed jobs.
 
 Read [Queues and Horizon](queues-and-horizon.md).
 
@@ -160,6 +161,8 @@ The app answers `400` to a host that is not the host of `APP_URL`, a host in `AP
 `MAIL_MAILER=log` writes each email to the log and sends nothing. Configure a mailer, or use the commands in [Recover access](recover-access.md).
 
 ### `/horizon` or `/admin` returns 404 or 403
+
+`/horizon` exists only when `QUEUE_CONNECTION` is `redis`. With another value, it returns 404.
 
 Only the owner can open these pages. Sign in as the owner, or make a user the owner with `php artisan snapsbrew:install --promote=<email>`.
 

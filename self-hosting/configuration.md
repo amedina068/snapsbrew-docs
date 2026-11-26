@@ -93,7 +93,7 @@ In the prefixes, `<app name>` is `APP_NAME` in lowercase, with `_` between the w
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
-| `QUEUE_CONNECTION` | `sync` | `sync` | The queue driver. `sync` renders in the request. Use `redis` with Horizon on a server. Docker sets `redis`. |
+| `QUEUE_CONNECTION` | `sync` | `sync` | The queue driver. `sync` renders in the request. Use `redis` with Horizon on a server. The Docker image sets `database`. The `mysql` profile of `docker-compose.yml` sets `redis`. |
 | `REDIS_QUEUE` | `default` | | The default queue name of the `redis` connection. |
 | `QUEUE_FAILED_DRIVER` | `database-uuids` | | Where the failed jobs go. |
 | `HORIZON_PREFIX` | `<app name>_horizon:` | `snapsbrew_horizon:` | The prefix of the Horizon keys in Redis. |
