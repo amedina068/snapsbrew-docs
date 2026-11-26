@@ -1,101 +1,91 @@
 ---
 title: Install with Docker
-description: Run Snapsbrew with Docker Compose, create the owner account and open the app.
+description: Run Snapsbrew in one container with one volume, open the setup URL and create the owner account.
 order: 2
 ---
 
 # Install with Docker
 
-The repository has a `Dockerfile` and a `docker-compose.yml`. The Compose stack has six containers:
+Snapsbrew runs in one container. The container serves the app on port 8080 and keeps all its data in one volume at `/data`. Inside the container, s6-overlay runs the web server, the queue worker, the scheduler and a headless Chromium for the renders.
 
-| Container | Image | What it does |
-|---|---|---|
-| `web` | `snapsbrew:latest` (built from the `Dockerfile`) | PHP-FPM and NGINX. Serves the app on port 8080. |
-| `horizon` | `snapsbrew:latest` | Runs `php artisan horizon`, the queue worker. |
-| `scheduler` | `snapsbrew:latest` | Runs `php artisan schedule:work`. |
-| `mysql` | `mysql:8.4` | The database. |
-| `redis` | `redis:8-alpine` | The cache, the sessions and the queues. |
-| `browserless` | `ghcr.io/browserless/chromium:v2.38.1` | The renderer. |
-
-The app image is based on `serversideup/php:8.4-fpm-nginx-trixie-v5.1.2`.
+You need no `.env` file, no keys and no database server. The default database is SQLite in `/data`.
 
 ## Requirements
 
-- Docker with the Compose plugin.
-- `openssl`, to make the secrets.
-- A host name that people can open, if the instance is public.
+- Docker. The Compose plugin is necessary only for MySQL and Redis.
+- A server with an `amd64` or `arm64` CPU and 2 GB of memory or more.
+- For HTTPS, a domain with a DNS A record that points to the server, and free ports 80 and 443.
 
-## Install
-
-1. Clone the repository and go into its folder.
-2. Copy the Docker settings file:
-
-   ```bash
-   cp .env.docker.example .env
-   ```
-
-3. Make the app key and the secrets:
-
-   ```bash
-   echo "APP_KEY=base64:$(openssl rand -base64 32)"
-   echo "DB_PASSWORD=$(openssl rand -hex 16)"
-   echo "DB_ROOT_PASSWORD=$(openssl rand -hex 16)"
-   echo "BROWSERLESS_TOKEN=$(openssl rand -hex 24)"
-   ```
-
-4. Put the four values in `.env`.
-5. Set `APP_URL` to the URL that people open, for example `https://snapsbrew.example`.
-6. Build and start the stack:
-
-   ```bash
-   docker compose up -d --build
-   ```
-
-7. Wait until the `web` container is healthy:
-
-   ```bash
-   docker compose ps
-   ```
-
-8. Read the setup URL in the log of the `web` container:
-
-   ```bash
-   docker compose logs web
-   ```
-
-9. Open the setup URL and create the owner account. Then the app signs you in.
-
-The first start runs all the migrations. It can take some minutes. The health check of `web` waits up to 10 minutes before a failure counts.
-
-If `DB_PASSWORD`, `DB_ROOT_PASSWORD` or `BROWSERLESS_TOKEN` is empty, `docker compose` stops with an error that names the missing variable.
-
-## Install from the published image
-
-`docker-compose.image.yml` runs the same stack with the published image `ghcr.io/amedina068/snapsbrew`. You do not clone the repository, and you do not build the image. A release publishes the image. Before the first release, use the build steps above.
-
-1. Put `docker-compose.image.yml` and `.env.docker.example` from the app repository in an empty folder.
-2. Do steps 2 to 5 of the install above.
-3. In `.env`, set `SNAPSBREW_VERSION` to an exact version, for example `SNAPSBREW_VERSION=0.1.0`. If you do not set it, the stack uses `latest`.
-4. Start the stack:
-
-   ```bash
-   docker compose -f docker-compose.image.yml up -d
-   ```
-
-5. Read the setup URL in the log of the `web` container:
-
-   ```bash
-   docker compose -f docker-compose.image.yml logs web
-   ```
-
-To update, change `SNAPSBREW_VERSION`. Then run:
+## Quick start
 
 ```bash
-docker compose -f docker-compose.image.yml pull
-docker compose -f docker-compose.image.yml up -d
+docker run -d --name snapsbrew -p 8080:8080 -v snapsbrew:/data ghcr.io/amedina068/snapsbrew
+docker logs -f snapsbrew
 ```
 
-With this file, add `-f docker-compose.image.yml` to each `docker compose` command on this page.
+The last line of the log is the setup URL. Open it and create the owner account. Then the app signs you in and shows the dashboard with six starter templates.
+
+## Install on a server
+
+Run the installer on the server:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/amedina068/snapsbrew/main/install.sh | bash
+```
+
+The installer asks for one value, the domain. Press Enter for `localhost`. Then it does these steps:
+
+1. It checks the CPU, Docker, the Docker daemon and the memory.
+2. It checks the ports. For a domain, ports 80 and 443 must be free. For `localhost`, it uses port 8080, or the next free port.
+3. It pulls the image.
+4. It starts the container with the volume `snapsbrew`.
+5. It waits until `GET /up` answers.
+6. It shows the app URL and the setup URL in a box.
+
+The installer writes a log to `/tmp/snapsbrew-install.log`. You can run it again: it replaces the container and keeps the volume. This is also the upgrade procedure.
+
+| Option | What it does |
+|---|---|
+| `--domain=<host>` | Uses this domain. The installer does not ask. |
+| `--non-interactive` | Asks nothing. The installer reads the domain from `APP_DOMAIN`. |
+| `--dry-run` | Shows each Docker command and changes nothing. |
+| `--help` | Shows the options. |
+
+These environment variables change the defaults of the installer: `SB_IMAGE`, `SB_VERSION`, `SB_CONTAINER`, `SB_VOLUME`, `SB_HTTP_PORT`, `SB_LOG_FILE` and `SB_WAIT_SECONDS`.
+
+## Install on a server without the installer
+
+Set `APP_DOMAIN` and publish ports 80 and 443:
+
+```bash
+docker run -d --name snapsbrew --restart unless-stopped \
+  -p 80:80 -p 443:443 -p 443:443/udp \
+  -e APP_DOMAIN=snapsbrew.example \
+  -v snapsbrew:/data \
+  ghcr.io/amedina068/snapsbrew
+```
+
+With `APP_DOMAIN`, Caddy in the container serves HTTPS on ports 80 and 443. It gets the certificate on the first request. The app derives `APP_URL`, the cookie settings and the trusted hosts from `APP_DOMAIN`.
+
+To put the app behind your own proxy instead, read [Reverse proxy and TLS](../self-hosting/reverse-proxy-and-tls.md).
+
+## Install with an AI agent
+
+Give this prompt to Claude Code, Codex or another agent that has a shell on the server:
+
+```text
+Read https://raw.githubusercontent.com/amedina068/snapsbrew/main/INSTALL.md and install Snapsbrew on this server.
+```
+
+`INSTALL.md` gives the agent non-interactive steps. The agent runs the installer, then creates the owner and an API token with one command:
+
+```bash
+docker exec snapsbrew php artisan snapsbrew:install \
+  --name="Ada Lovelace" --email=ada@example.com \
+  --with-token=agent --json --no-interaction
+```
+
+The JSON result has a one-time `login_url` for the owner and a `connect` object with a ready `claude mcp add` line. Then the agent runs `snapsbrew:doctor --json` to check the instance. Read [Connect Claude](../mcp/connect-claude.md).
 
 ## The setup URL
 
@@ -103,72 +93,100 @@ The setup page at `/setup` creates the owner account. It is open only while the 
 
 The setup URL holds a token. Snapsbrew makes the token from `APP_KEY` with HMAC-SHA256, so the instance stores no token. If `APP_KEY` changes, the token changes.
 
-If you lose the setup URL, show it again:
+If you open the app without the token, the page tells you how to get the setup URL. To show the URL again, run:
 
 ```bash
-docker compose exec web php artisan snapsbrew:setup-url
+docker exec snapsbrew php artisan snapsbrew:setup-url
 ```
 
-To create the owner in the terminal instead of the setup page, run this command. It asks for the name, the email and the password:
+The setup page has the checkbox **Add the starter templates**, which is on by default. The six templates are on the dashboard at once. Their preview images render on the queue a few seconds later.
+
+The owner goes to the dashboard after setup. The onboarding wizard is only for the people who sign up later. Read [Accounts and registration](../self-hosting/accounts-and-registration.md).
+
+## What the container does at start
+
+1. On the first start, it writes `APP_KEY` and the other secrets to a file in `/data`. On a later start, it reads the same file.
+2. It runs the migrations.
+3. It starts the web server, the queue worker, the scheduler and Chromium.
+4. The last line of the log is the setup URL, or the app URL if an owner exists.
+
+The Docker health check reads `GET /up`.
+
+## The /data volume
+
+The `/data` volume holds the SQLite database, the rendered images, the uploads, the Passport keys and the generated secrets.
+
+CAUTION: Do not lose the `/data` volume. Without `APP_KEY` and the Passport keys, the app cannot read its encrypted data, and every session, setup link and MCP OAuth token stops working.
+
+Read [Backups](../self-hosting/backups.md).
+
+## The published image
+
+A version tag (`v0.1.0` and later) publishes the image `ghcr.io/amedina068/snapsbrew` for `linux/amd64` and `linux/arm64`. The `latest` tag follows the newest version. To stay on one version, use an exact tag, for example `ghcr.io/amedina068/snapsbrew:0.1.0`.
+
+Before the first tag, build the image from a clone of the app repository:
 
 ```bash
-docker compose exec web php artisan snapsbrew:install
+docker build -t ghcr.io/amedina068/snapsbrew .
 ```
 
-You can also give the values as options: `--name`, `--email`, `--password` and `--company`. Read [Accounts and registration](../self-hosting/accounts-and-registration.md) for the owner and the registration modes.
+## MySQL, Redis and Browserless
 
-## What the `web` container does at start
+SQLite in `/data` is enough for one server. For MySQL 8.4, Redis and a separate Browserless renderer, use `docker-compose.yml` of the app repository. Its `mysql` profile adds the three services, and the web container then runs Horizon instead of `queue:work`.
 
-1. The serversideup entrypoint runs the Laravel automations (`AUTORUN_ENABLED`). These run the migrations, the storage link and the Laravel caches.
-2. The script `deploy/docker/entrypoint.d/60-snapsbrew-setup.sh` runs `php artisan snapsbrew:install --prepare`. This command creates the Passport keys and the storage link when they are missing.
-3. While no account exists, the script prints the setup URL to the log.
+1. Clone the app repository:
 
-Only the `web` container sets `SNAPSBREW_PREPARE_ON_START=true`, so only `web` does steps 2 and 3. The `horizon` and `scheduler` containers start after `web` is healthy.
+   ```bash
+   git clone https://github.com/amedina068/snapsbrew.git
+   cd snapsbrew
+   ```
 
-## Volumes
+2. Make the `.env` file. The command copies `.env.docker.example` and adds its MySQL block with two new passwords:
 
-| Volume | Content |
+   ```bash
+   cp .env.docker.example .env
+   cat >> .env <<EOF
+   COMPOSE_PROFILES=mysql
+   DB_CONNECTION=mysql
+   DB_HOST=mysql
+   DB_PORT=3306
+   DB_DATABASE=snapsbrew
+   DB_USERNAME=snapsbrew
+   DB_PASSWORD=$(openssl rand -hex 24)
+   REDIS_HOST=redis
+   REDIS_PASSWORD=null
+   CACHE_DRIVER=redis
+   QUEUE_CONNECTION=redis
+   SESSION_DRIVER=redis
+   RENDER_DRIVER=browserless
+   BROWSERLESS_URL=http://browserless:3000
+   RENDER_ASSET_URL=http://web:8080
+   BROWSERLESS_TOKEN=$(openssl rand -hex 24)
+   EOF
+   ```
+
+3. For a domain, add `APP_DOMAIN=snapsbrew.example` to `.env`. Then add `"80:80"` and `"443:443"` to the `ports` of the `web` service in `docker-compose.yml`. For localhost, skip this step.
+4. Build and start the stack:
+
+   ```bash
+   docker compose up -d --build
+   docker compose logs -f web
+   ```
+
+5. Wait for the line `Snapsbrew is ready`. The next line is the setup URL. Open it and create the owner account.
+
+On the first start, the web container waits for MySQL and loads the schema. This takes about 90 seconds.
+
+| Variable | Why it is necessary |
 |---|---|
-| `storage` | The rendered images, the uploads, the Passport keys and the logs. It is mounted at `/var/www/html/storage`. |
-| `mysql` | The database files. |
-| `redis` | The Redis data. |
+| `COMPOSE_PROFILES=mysql` | Starts the `mysql`, `redis` and `browserless` services. Then `docker compose` needs no `--profile` flag. |
+| `DB_CONNECTION=mysql` and the other `DB_` values | Without them, the web container uses SQLite in `/data`, and the log shows a warning. |
+| `DB_PASSWORD` | The `mysql` service creates the app user with this password. |
+| `QUEUE_CONNECTION=redis` | Horizon runs the queue. With another value, the container runs `queue:work`. |
+| `RENDER_DRIVER=browserless` and `BROWSERLESS_TOKEN` | The renders go to the Browserless container. The token is its only protection. |
+| `RENDER_ASSET_URL=http://web:8080` | Browserless gets the images and the fonts of a snap from the web container through this address. With it, a `localhost` install renders images from its own storage. |
 
-Make a backup of these volumes. Read [Backups](../self-hosting/backups.md).
-
-## Ports and HTTPS
-
-The app answers on port 8080 of the loopback interface (`127.0.0.1`) of the host. To change the port, set `APP_PORT` in `.env`. To take traffic from other hosts with no proxy, set `APP_BIND=0.0.0.0`.
-
-The stack does not serve HTTPS. To serve HTTPS, put a reverse proxy on the host in front of the app. Then set `TRUSTED_PROXIES` to the address of the proxy. Do not set it to `*`. Read [Reverse proxy and TLS](../self-hosting/reverse-proxy-and-tls.md).
-
-The Browserless port is not published. The token is the only protection of Browserless, so its port stays inside the Compose network.
-
-## Settings that Compose sets
-
-`docker-compose.yml` sets these values for the app containers. Do not set them in `.env`, because the Compose values win:
-
-| Variable | Value |
-|---|---|
-| `DB_CONNECTION` | `mysql` |
-| `DB_HOST` | `mysql` |
-| `DB_PORT` | `3306` |
-| `REDIS_HOST` | `redis` |
-| `CACHE_DRIVER` | `redis` |
-| `QUEUE_CONNECTION` | `redis` |
-| `SESSION_DRIVER` | `redis` |
-| `RENDER_DRIVER` | `browserless` |
-| `BROWSERLESS_URL` | `http://browserless:3000` |
-
-The Browserless container has these limits: `CONCURRENT` is 5, `QUEUED` is 20 and `TIMEOUT` is 15000 milliseconds.
-
-## Known limit: images on the instance
-
-Browserless renders inside its own container. If a template loads an image from your instance, Browserless gets that image through `APP_URL`.
-
-- A public domain works.
-- A `localhost` URL does not work for these images, because `localhost` inside the Browserless container is the container itself.
-
-Read [Rendering](../self-hosting/rendering.md) for more information.
+With Compose, add `docker compose exec web` before each `php artisan` command, for example `docker compose exec web php artisan snapsbrew:setup-url`. Read [Rendering](../self-hosting/rendering.md).
 
 ## Next steps
 

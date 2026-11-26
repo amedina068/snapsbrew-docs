@@ -8,8 +8,9 @@ order: 1
 
 Snapsbrew reads its settings from environment variables. Put them in the `.env` file in the root of the app.
 
+- For the one-container install, give each variable with `-e` to `docker run`, for example `-e MAIL_MAILER=smtp`. The container needs no `.env` file. It writes `APP_KEY` and the other secrets to `/data` on the first start.
 - For a server or a local install, start from `.env.example`.
-- For Docker, start from `.env.docker.example`. Every variable of `.env.example` also works there.
+- For Docker Compose, start from `.env.docker.example`. Every variable of `.env.example` also works there.
 
 After you change `.env` on a server that caches the configuration, run `php artisan config:cache` again. With Docker, restart the containers: `docker compose up -d`.
 
@@ -27,6 +28,7 @@ After you change `.env` on a server that caches the configuration, run `php arti
 | `APP_ENV` | `production` | `production` | The environment. Horizon uses 10 worker processes in `production` and 3 in `local`. Another value starts no Horizon worker. |
 | `APP_KEY` | none | none | The encryption key. Make it with `php artisan key:generate`. The setup token and the stored signed-URL keys depend on it. |
 | `APP_DEBUG` | `false` | `false` | Shows the error details in the browser. Set `true` only for local development. |
+| `APP_DOMAIN` | none | | The domain of the instance, for example `snapsbrew.example`. With it, the container serves HTTPS on ports 80 and 443 through Caddy. The app derives `APP_URL`, `SESSION_DOMAIN`, `SANCTUM_STATEFUL_DOMAINS` and `SESSION_SECURE_COOKIE` from it. |
 | `APP_URL` | `http://localhost` | `http://localhost:8000` | The public URL of the instance. Links, the API docs, the signed URLs and the URLs of the `public` disk use it. |
 | `APP_PREVIOUS_URLS` | empty | empty | Earlier hosts of the instance, comma separated. Embedded form URLs that the app signed on one of these hosts keep working. |
 | `APP_PORT` | `8080` | | Docker only. The host port of the `web` container. It is in `.env.docker.example`. |
@@ -58,7 +60,6 @@ The app ships no privacy policy and no terms of service. If your instance is pub
 | `DB_DATABASE` | `forge` (`database/database.sqlite` for SQLite) | commented out | The database name, or the SQLite file. |
 | `DB_USERNAME` | `forge` | commented out | The database user. |
 | `DB_PASSWORD` | empty | commented out | The database password. |
-| `DB_ROOT_PASSWORD` | none | | Docker only. The MySQL root password of the `mysql` container. |
 | `DB_SOCKET` | empty | | A MySQL Unix socket. |
 | `DB_FOREIGN_KEYS` | `true` | | Turns on the foreign keys of SQLite. |
 | `DATABASE_URL` | none | | A full database URL instead of the separate values. |
@@ -92,7 +93,7 @@ In the prefixes, `<app name>` is `APP_NAME` in lowercase, with `_` between the w
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
-| `QUEUE_CONNECTION` | `sync` | `sync` | The queue driver. `sync` renders in the request. Use `redis` with Horizon on a server. Docker sets `redis`. |
+| `QUEUE_CONNECTION` | `sync` | `sync` | The queue driver. `sync` renders in the request. Use `redis` with Horizon on a server. The Docker image sets `database`. The `mysql` profile of `docker-compose.yml` sets `redis`. |
 | `REDIS_QUEUE` | `default` | | The default queue name of the `redis` connection. |
 | `QUEUE_FAILED_DRIVER` | `database-uuids` | | Where the failed jobs go. |
 | `HORIZON_PREFIX` | `<app name>_horizon:` | `snapsbrew_horizon:` | The prefix of the Horizon keys in Redis. |

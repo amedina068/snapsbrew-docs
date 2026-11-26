@@ -24,7 +24,7 @@ If the scheduler does not run, the idempotency keys and the old packages stay in
 
 ## Run the scheduler with Docker
 
-The `scheduler` container runs `php artisan schedule:work`. This command runs the scheduler every minute in the foreground. The container starts after the `web` container is healthy.
+The container runs `php artisan schedule:work`. This command runs the scheduler every minute in the foreground. If another container runs the scheduler, set `SNAPSBREW_SCHEDULER=false`.
 
 ## Run the scheduler without Docker
 

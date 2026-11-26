@@ -23,15 +23,23 @@ The examples use the host `https://snapsbrew.example`. Replace it with the `APP_
 
 ## Claude Code
 
-1. Run this command in a terminal. Replace `<your-token>` with your API token.
+1. Export the token in a terminal. Replace `<your-token>` with your API token:
+
+   ```bash
+   export SNAPSBREW_TOKEN='<your-token>'
+   ```
+
+2. In the same terminal, add the server. The command reads the token from `SNAPSBREW_TOKEN`, so the token is not in the command text or in the shell history:
 
    ```bash
    claude mcp add --transport http snapsbrew https://snapsbrew.example/mcp \
-     --header "Authorization: Bearer <your-token>"
+     --header "Authorization: Bearer ${SNAPSBREW_TOKEN}"
    ```
 
-2. Restart the Claude Code session.
-3. Ask Claude to call the `whoami` tool. The tool returns your account and your company.
+3. Restart the Claude Code session.
+4. Ask Claude to call the `whoami` tool. The tool returns your account and your company.
+
+On the server, `php artisan snapsbrew:mcp:connect --client=claude` prints the same two lines with the URL of your instance. Add `--token=new` to make a new token. The token is only in the export line.
 
 ## Claude Desktop
 

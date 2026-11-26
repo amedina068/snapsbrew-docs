@@ -6,7 +6,7 @@ order: 5
 
 # Queues and Horizon
 
-Snapsbrew sends slow work to a queue. Laravel Horizon runs the queue workers on Redis.
+Snapsbrew sends slow work to a queue. With the `redis` queue, Laravel Horizon runs the queue workers. With the `database` queue, `php artisan queue:work` runs them.
 
 ## What runs on the queue
 
@@ -24,13 +24,16 @@ Snapsbrew sends slow work to a queue. Laravel Horizon runs the queue workers on 
 | `QUEUE_CONNECTION` | Effect |
 |---|---|
 | `sync` | Each job runs in the web request. No worker is necessary. Use it only for local development. |
-| `redis` | Jobs go to Redis. Horizon must run. Docker sets this value. |
+| `database` | Jobs go to the `jobs` table. `php artisan queue:work` must run. The Docker image sets this value. |
+| `redis` | Jobs go to Redis. Horizon must run. The `mysql` profile of `docker-compose.yml` uses this value. |
 
-If `QUEUE_CONNECTION` is `redis` and Horizon does not run, async snaps, batches and imports stay `pending`.
+If no worker runs, async snaps, batches and imports stay `pending`.
 
-## Run Horizon
+The app loads Horizon only when `QUEUE_CONNECTION` is `redis`. With another value, the app has no `/horizon` route and no `horizon` commands.
 
-With Docker, the `horizon` container runs `php artisan horizon`. It starts after the `web` container is healthy. It gets 60 seconds to stop.
+## Run the queue worker
+
+With Docker, the container runs `php artisan horizon` when `QUEUE_CONNECTION` is `redis`. With another queue connection, for example `database`, it runs `php artisan queue:work` instead.
 
 Without Docker, run `php artisan horizon` under a process manager. The app repository has a systemd unit, [`deploy/systemd/snapsbrew-horizon.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-horizon.service), and a Supervisor file, [`deploy/supervisor/snapsbrew.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/supervisor/snapsbrew.conf). Both give Horizon 130 seconds to stop, because a creative package item can run for 120 seconds. Read [Install without Docker](../getting-started/installation-manual.md#start-the-background-processes).
 
@@ -40,9 +43,21 @@ After you deploy new code, stop Horizon so that the process manager starts it wi
 php artisan horizon:terminate
 ```
 
+If you use the `database` queue without Docker, run `php artisan queue:work` under the process manager. Use the same queue order and limits as the Docker container:
+
+```bash
+php artisan queue:work database --queue=renders,imports,mail,default --sleep=1 --tries=1 --timeout=60 --memory=256 --max-time=3600
+```
+
+After you deploy new code, stop the worker so that the process manager starts it with the new code:
+
+```bash
+php artisan queue:restart
+```
+
 ## The supervisor
 
-`config/horizon.php` defines one supervisor, `supervisor-1`:
+This section applies to the `redis` queue. `config/horizon.php` defines one supervisor, `supervisor-1`:
 
 | Setting | Value |
 |---|---|
@@ -68,7 +83,7 @@ The one supervisor reads all four queues, `renders` first. So the variable sets 
 
 ## The Horizon dashboard
 
-The dashboard is at `/horizon`. `HORIZON_PATH` changes the path, and `HORIZON_DOMAIN` moves it to another domain.
+The dashboard exists only when `QUEUE_CONNECTION` is `redis`. It is at `/horizon`. `HORIZON_PATH` changes the path, and `HORIZON_DOMAIN` moves it to another domain.
 
 Only the owner of the instance can open the dashboard, in every environment. Every other visitor gets `403`.
 
@@ -76,7 +91,7 @@ CAUTION: Set `APP_ENV=production` on a server. Horizon starts workers only for `
 
 ## Failed jobs
 
-Failed jobs go to the `failed_jobs` table (`QUEUE_FAILED_DRIVER=database-uuids`). You can read them in the Horizon dashboard.
+Failed jobs go to the `failed_jobs` table (`QUEUE_FAILED_DRIVER=database-uuids`). To list them, run `php artisan queue:failed`. With the `redis` queue, you can also read them in the Horizon dashboard.
 
 To try a failed job again:
 

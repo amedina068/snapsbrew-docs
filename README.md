@@ -1,5 +1,8 @@
 # Snapsbrew documentation
 
+[![CI](https://github.com/amedina068/snapsbrew-docs/actions/workflows/ci.yml/badge.svg)](https://github.com/amedina068/snapsbrew-docs/actions/workflows/ci.yml)
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/amedina068/snapsbrew-docs/badge)](https://scorecard.dev/viewer/?uri=github.com/amedina068/snapsbrew-docs)
+
 This repository holds the documentation of [Snapsbrew](https://snapsbrew.com), a self-hosted app that renders images and PDFs from templates.
 
 The marketing site renders these files at [snapsbrew.com/docs](https://snapsbrew.com/docs). Each Markdown file is one page. The folder of a file is the section of the page.
@@ -137,7 +140,7 @@ SNAPSBREW_APP_PATH=../snapsbrew node scripts/check-docs.mjs
 The script then makes sure that:
 
 - each `php artisan <command>` in a page exists in the app,
-- each environment variable in the code of a page exists in `.env.example`, `.env.docker.example`, `config/`, the Docker files or `deploy/` of the app,
+- each environment variable in the code of a page exists in `.env.example`, `.env.docker.example`, `config/`, the Docker files, `install.sh` or `deploy/` of the app,
 - each `METHOD /path` on an API page (`api/*.md`) exists in `docs/api/openapi.yaml` of the app,
 - each operation of `docs/api/openapi.yaml` is on an API page,
 - each internal link and each anchor resolves.

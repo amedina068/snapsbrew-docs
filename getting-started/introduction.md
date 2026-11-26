@@ -30,7 +30,7 @@ Snapsbrew is a Laravel 13 app with a Vue 3 editor. The main parts are:
 |---|---|
 | Web app | Serves the editor, the dashboard, the REST API, the MCP server and the docs pages of the instance. |
 | Database | MySQL 8 in production. SQLite works for local development. |
-| Redis and Horizon | Hold and run the queued jobs: async renders, batches, imports and mail. |
+| Queue worker | Runs the queued jobs: async renders, batches, imports and mail. The Docker image uses the `database` queue and `queue:work`. A Redis install uses Horizon. |
 | Scheduler | Runs the cleanup and the repair commands on a timer. |
 | Renderer | Headless Chrome. Snapsbrew sends the HTML of a snap to Chrome and stores the image that comes back. |
 | Media storage | Holds the rendered images and the uploads, on the local disk or in an S3-compatible bucket. |

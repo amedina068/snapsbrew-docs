@@ -75,3 +75,17 @@ Start a warning with `WARNING:` (a risk to data or security) or `CAUTION:` (a ri
 3. Fill in the pull request template.
 
 The CI must pass before a merge.
+
+## Pull request titles
+
+The title of a pull request must follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/). The `PR title` check of the CI fails if the title does not follow it. The titles of the merged pull requests become the lines of the release notes, so a clear title helps each user.
+
+Start the title with a type: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `build`, `ci`, `chore` or `revert`. A scope in parentheses is optional. Examples:
+
+- `docs: add a page about Cloudflare R2 storage`
+- `fix: correct the default value of BROWSERLESS_TIMEOUT`
+- `chore: check the anchors of the MCP pages`
+
+## Triage
+
+Each new issue gets the `needs-triage` label. The maintainer reads the issue and replaces `needs-triage` with a type label, for example `bug`, `enhancement`, `documentation` or `question`.
