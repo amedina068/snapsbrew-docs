@@ -8,11 +8,13 @@ order: 6
 
 This page lists the changes to Snapsbrew that users can see. The newest date is first.
 
-For developers, `CHANGELOG.md` in the app repository lists the changes to the code for each version.
+A version heading marks the day of a release. The changes in the dated entries below a version heading are part of that version. For developers, `CHANGELOG.md` in the [app repository](https://github.com/amedina068/snapsbrew/blob/main/CHANGELOG.md) lists the changes to the code for each version.
 
-## Version 0.1.0
+## November 25, 2026: version 0.1.0
 
-Version 0.1.0 is the first public release. It is not released yet. This list gives its main features. The dated notes below give each change.
+Version 0.1.0 is the first public release of Snapsbrew. The [GitHub release](https://github.com/amedina068/snapsbrew/releases/tag/v0.1.0) lists all the changes. The Docker image is `ghcr.io/amedina068/snapsbrew:0.1.0`. Read [Install with Docker](installation-docker.md).
+
+The main features of this version:
 
 - Template editor in the browser with text, image, shape, SVG pattern, QR code and barcode layers, groups, custom fonts and brand tokens. Each publish freezes a template version.
 - REST API to render one snap, a collection or a batch of up to 100 items, in sync or async mode, with webhooks and idempotency keys. The API docs at `/documentation` come from one spec, with an OpenAPI schema and a Postman collection.
@@ -23,12 +25,24 @@ Version 0.1.0 is the first public release. It is not released yet. This list giv
 - MCP server for AI agents, with API token or OAuth 2.0 access, design guidance tools and creative packages.
 - Usage log of each request and each render.
 - Teams with invitations and two-factor authentication.
-- Self-hosting with Docker Compose: web, Horizon, scheduler, MySQL, Redis and Browserless.
+- Self-hosting with Docker. The default stack is one container with SQLite and a built-in Chromium. The `mysql` profile of `docker-compose.yml` adds MySQL, Redis and Browserless, and then Horizon runs the queue.
 - A Docker image on GHCR for each release, for `linux/amd64` and `linux/arm64`, and `docker-compose.image.yml` to run it without a build.
 - First-run setup page at `/setup` and the `snapsbrew:install` command to create the owner of the instance.
 - Six starter templates: a link preview, a quote card, a certificate, an announcement, a blog header and a YouTube thumbnail. The setup page and `snapsbrew:install` offer them, and `snapsbrew:starter-templates` adds them to any account.
 - Invite-only and open registration modes, an owner role, user deactivation and account recovery commands.
 - Optional Rollbar error reports and S3-compatible media storage.
+
+The changes of November 25, 2026:
+
+- Snapsbrew runs in one Docker container with no settings. The container uses SQLite and a built-in Chromium, and the last log line is the URL to open. MySQL, Redis and Browserless are still available as the `mysql` profile of `docker-compose.yml`.
+- A new `install.sh` installs Snapsbrew on a server with one command.
+- The setup page puts the starter templates on the first dashboard, and the owner goes straight to the dashboard.
+- Each pending invitation has a **Copy invite link** button. If mail is not set up, the page tells you to send the link yourself.
+- A snap renders with no internet access, and its fonts look the same as before. If the server cannot load a font, the API returns a `font_unavailable` item in the new `warnings` field of the snap.
+- An AI agent can install and operate Snapsbrew from the command line. `php artisan snapsbrew:install --with-token=agent --json` returns a one-time login link, an API token and the `claude mcp add` line. The new `snapsbrew:status` and `snapsbrew:doctor` commands and the instance-admin MCP server do the rest.
+- Each user of a company is an owner or a member. Only an owner can rename the company, send and cancel invitations, rotate the webhook secret, delete fonts and change the roles. **Account > Users** has **Make owner** and **Make member** buttons. Read [Company roles](../self-hosting/accounts-and-registration.md#company-roles).
+- An upgrade makes the first user of each company its owner. Every other user becomes a member.
+- On MySQL, a template save with no change to the layers no longer renders a new preview.
 
 ## November 18, 2026
 
