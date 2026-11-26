@@ -1,6 +1,6 @@
 ---
 title: Accounts and registration
-description: Create the owner, set the company roles, choose who can sign up, invite people and deactivate users.
+description: Create the owner, set the company roles, choose who can sign up, invite people, remove users and deactivate users.
 order: 8
 ---
 
@@ -24,8 +24,8 @@ The company role is `owner` or `member`. The `users.company_role` column stores 
 
 | Company role | What the role can do |
 |---|---|
-| Owner | Everything that a member can do. Also renames the company, sends and cancels invitations, rotates the webhook secret, deletes fonts and changes the company roles of the users. |
-| Member | Creates and changes the shared content of the company: templates, snaps, collections, forms, tags and media. |
+| Owner | Everything that a member can do. Also renames the company, sends and cancels invitations, rotates the webhook secret, deletes fonts, changes the company roles of the users and removes users. |
+| Member | Creates and changes the shared content of the company: templates, snaps, collections, forms, tags and media. Uploads fonts. |
 
 If a member tries an owner action, the request returns 403. The page shows "Only a company owner can do this."
 
@@ -46,6 +46,31 @@ A user gets a company role when the account is created:
 A company can have more than one owner. To make an owner a member, click **Make member** on the row of the owner.
 
 `php artisan snapsbrew:user:list --json` and the `list-users` tool of the instance-admin MCP server show the `company_role` of each user. **Admin > Users** shows it too.
+
+### Remove a user from the company
+
+An owner of the company can remove a user. The removal deactivates the account, the same as [Deactivate a user](#deactivate-a-user).
+
+1. Sign in as an owner of the company.
+2. Open **Account > Users**.
+3. Click **Remove** on the row of the user.
+4. Confirm in the browser dialog.
+
+After the removal:
+
+- The user cannot sign in, and an open web session ends at the next request.
+- The API tokens, the OAuth tokens and the signed URLs of the user stop working.
+- The templates and snaps of the user stay in the company.
+- The row of the user shows **Deactivated**.
+
+These rules apply:
+
+- A member cannot remove a user. The request returns 403.
+- An owner can remove only a user of the same company.
+- An owner cannot remove the last active owner. To leave the company, make another user an owner first.
+- An owner cannot remove the owner of the instance. The request returns 403.
+
+To restore access, the instance owner clicks **Reactivate** in **Admin > Users**.
 
 ### Set a company role from the command line
 
@@ -70,6 +95,7 @@ With `--json`, stdout holds one JSON object. The exit codes are:
 An active owner is an owner who is not deactivated. A company that has active users always keeps at least one active owner. A deactivated owner does not count.
 
 - The last active owner cannot become a member. Its row on **Account > Users** shows "The last active owner stays an owner."
+- An owner cannot remove the last active owner on **Account > Users**, also when the company has no other user.
 - `snapsbrew:user:role` refuses the same change with exit code 3.
 - The instance owner cannot deactivate the last active owner. Read [Deactivate a user](#deactivate-a-user).
 
@@ -179,6 +205,8 @@ The owner can deactivate a user in **Admin > Users**. A deactivated user keeps a
 - The embedded forms of the user return 404.
 
 To restore access, click **Reactivate**. The tokens, the signed URLs and the forms of the user work again.
+
+A company owner can also deactivate a user of the company. Read [Remove a user from the company](#remove-a-user-from-the-company).
 
 The owner cannot deactivate an owner. The request returns 403.
 
