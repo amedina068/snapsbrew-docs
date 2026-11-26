@@ -12,7 +12,7 @@ This page describes version 0.2.0 of each library, on the `main` branch of its r
 
 | Language | Repository | Package name | Runtime |
 |---|---|---|---|
-| JavaScript and TypeScript | `amedina068/snapsbrew-js` | `snapsbrew` | Node.js 20 or later, Bun 1.x, Deno 2.x, Cloudflare Workers |
+| JavaScript and TypeScript | `amedina068/snapsbrew-js` | `snapsbrew` | Node.js 22.12 or later, Bun 1.x, Deno 2.x, Cloudflare Workers |
 | PHP | `amedina068/snapsbrew-php` | `snapsbrew/snapsbrew-php` | PHP 8.2, 8.3 and 8.4. Laravel 11, 12 and 13 are optional. |
 | Python | `amedina068/snapsbrew-python` | `snapsbrew` | Python 3.10, 3.11, 3.12, 3.13 and 3.14 |
 | Ruby | `amedina068/snapsbrew-ruby` | `snapsbrew` | Ruby 3.2, 3.3 and 3.4. Rails 7.2, 8.0 and 8.1 are optional. |
@@ -168,13 +168,13 @@ npm install github:amedina068/snapsbrew-js
 
 For Bun, run `bun add github:amedina068/snapsbrew-js`.
 
-The `prepare` script of the package builds the package during the install. The build tools need Node.js 22.18 or later. The built package runs on Node.js 20.
+The `prepare` script of the package builds the package during the install. The build tools need Node.js 22.18 or later. The built package runs on Node.js 22.12 or later.
 
 ### Requirements
 
 | Runtime | Version | Test in CI |
 |---|---|---|
-| Node.js | 20, 22, 24 and later | Unit tests and smoke test |
+| Node.js | 22.12 and later | Unit tests and smoke test on Node.js 22 and 24 |
 | Bun | 1.x | Smoke test |
 | Deno | 2.x | Smoke test |
 | Cloudflare Workers | Current | None. The package uses only Web APIs that Workers supply. |
