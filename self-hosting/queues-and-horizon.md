@@ -71,7 +71,7 @@ This section applies to the `redis` queue. `config/horizon.php` defines one supe
 
 CAUTION: Set `APP_ENV` to `production` or `local`. Horizon starts workers only for the environments in `config/horizon.php`. With another value, for example `staging`, Horizon runs but starts no worker.
 
-Keep the maximum process count in line with the `CONCURRENT` value of Browserless. Read [Rendering](rendering.md).
+If you use Browserless, keep the maximum process count in line with its `CONCURRENT` value. Read [Rendering](rendering.md).
 
 The items of a creative package are an exception to the supervisor values. Each item job sets its own tries (3) and timeout (120 seconds). Read [Creative packages](../using-snapsbrew/creative-packages.md).
 

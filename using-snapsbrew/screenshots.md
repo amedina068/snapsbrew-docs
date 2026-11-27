@@ -47,7 +47,7 @@ The full request and response are in [Screenshots API](../api/screenshots.md).
 The renderer that captures the page is the same renderer that renders snaps. `RENDER_DRIVER` selects it:
 
 - `browserless` sends the URL to the Browserless service.
-- `browsershot` starts a local Chrome through Node and Puppeteer.
+- `browsershot` uses Node and Puppeteer. In the Docker image, it opens a tab in the Chromium of the container. Without `BROWSERSHOT_INSTANCE`, it starts a local Chrome.
 
 With the `browsershot` driver, `BROWSERSHOT_INSTANCE` can name a remote Chrome as `host:port`. If it is empty, the app starts a local Chrome. The `browserless` driver does not read this variable.
 

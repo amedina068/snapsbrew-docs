@@ -21,8 +21,8 @@ This page gives an overview for a contributor. The file `ARCHITECTURE.md` in the
 | OAuth for the MCP server | Laravel Passport |
 | MCP server | `laravel/mcp` |
 | File storage | Spatie Media Library |
-| Headless Chrome | Browserless, or Spatie Browsershot |
-| Queues | Laravel Horizon on Redis |
+| Headless Chrome | Spatie Browsershot (the Chromium in the Docker image), or Browserless |
+| Queues | The `database` queue with `queue:work` by default. Laravel Horizon when the queue is Redis. |
 
 ## Domain model
 

@@ -1,12 +1,14 @@
 ---
 title: Install without Docker
-description: Install Snapsbrew on a server with PHP, Node, MySQL, Redis and a renderer.
+description: Install Snapsbrew on a server with PHP, Node, a database, Redis and a renderer.
 order: 3
 ---
 
 # Install without Docker
 
-This page installs Snapsbrew on a Linux server without Docker. For a test on your own computer, read [Development setup](../contributing/development-setup.md) instead.
+This page installs Snapsbrew on a Linux server without Docker. The Docker image is easier to install and to keep current. It runs in one container with SQLite and needs no MySQL and no Redis. Read [Install with Docker](installation-docker.md). For a test on your own computer, read [Development setup](../contributing/development-setup.md) instead.
+
+The manual install on this page uses MySQL, Redis, Horizon, and Browserless.
 
 ## Requirements
 
@@ -16,12 +18,12 @@ This page installs Snapsbrew on a Linux server without Docker. For a test on you
 | PHP extensions | `gd`, `intl`, `exif` and `bcmath` (the Docker image adds these). Also `pdo_mysql` and `redis`, because `REDIS_CLIENT` defaults to `phpredis`. |
 | Composer | 2.x. |
 | Node | 22, to build the front-end assets. Browsershot also needs Node at render time. |
-| Database | MySQL 8. The Docker stack uses MySQL 8.4. |
-| Redis | For the cache, the sessions and the queues. The Docker stack uses Redis 8. |
+| Database | MySQL 8.4, or SQLite. The Docker image uses SQLite. The `mysql` profile of the Compose stack uses MySQL 8.4. |
+| Redis | For the cache, the sessions and the queues with Horizon. The `mysql` profile of the Compose stack uses Redis 8. |
 | Web server | NGINX or Apache with PHP-FPM. The document root is the `public` folder. |
 | Renderer | A Browserless service, or a local Chrome for Browsershot. Read [Rendering](../self-hosting/rendering.md). |
 
-MySQL 8 is the only supported production database. Use MySQL 8.4, the version that the Docker stack and the CI use. SQLite is only for local development and the test suite. The project does not support PostgreSQL or MariaDB. Before you report a database bug, reproduce it on MySQL.
+The supported production databases are SQLite and MySQL 8.4. The Docker image uses SQLite. The CI tests both. The project does not support PostgreSQL or MariaDB.
 
 The [`deploy/`](https://github.com/amedina068/snapsbrew/tree/main/deploy) folder of the app has example files for this page: NGINX, Caddy, systemd, Supervisor and PHP. Copy an example, then replace the example values with your values. Read the [deploy README](https://github.com/amedina068/snapsbrew/blob/main/deploy/README.md).
 
