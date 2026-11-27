@@ -1,6 +1,6 @@
 ---
 title: Rendering
-description: Choose and tune the renderer, Browserless or Browsershot, and make sure that it can load fonts and images.
+description: Choose and tune the renderer, Browsershot or Browserless, and make sure that it can load fonts and images.
 order: 4
 ---
 
@@ -10,8 +10,8 @@ Snapsbrew builds an HTML document for each snap. Headless Chrome opens this docu
 
 | Driver | How it works | Default in |
 |---|---|---|
-| `browserless` | The app sends the HTML over HTTP to a Browserless service. One warm Chrome serves every render. | Docker (`docker-compose.yml`) |
-| `browsershot` | The app starts Node, Puppeteer and a local Chrome for each render. | `.env.example` and the config default |
+| `browsershot` | The app starts Node and Puppeteer for each render. Puppeteer connects to a warm Chrome, or starts a local Chrome. | The Docker image, `.env.example` and the config default |
+| `browserless` | The app sends the HTML over HTTP to a Browserless service. One warm Chrome serves every render. | The `mysql` profile of `docker-compose.yml` |
 
 The same driver also captures the screenshots of web pages. Read [Screenshots](../using-snapsbrew/screenshots.md).
 
@@ -66,7 +66,15 @@ WARNING: Do not publish the Browserless port to the internet. The token is its o
 
 ## Browsershot
 
-Browsershot starts a new Chrome for each render. It is slower and uses more memory than Browserless. It needs no extra service, so it is the default for local development.
+### Browsershot in the Docker image
+
+The Docker image runs a headless Chromium as a service in the container. Browsershot connects to it at `http://127.0.0.1:9222` (`BROWSERSHOT_INSTANCE`) and opens one tab for each render. The Chromium port listens inside the container only. With `RENDER_DRIVER=browserless`, this Chromium does not start.
+
+The image also sets `RENDER_ASSET_URL=http://127.0.0.1:8080`. Chromium then loads the images and the fonts of the `public` disk from the web server in the container. This also works when `APP_URL` is a `localhost` URL.
+
+### Browsershot without a warm Chrome
+
+When `BROWSERSHOT_INSTANCE` is empty, Browsershot starts a new Chrome for each render. This is slower and uses more memory than a warm Chrome. It needs no extra service, so it is the default for local development.
 
 ```dotenv
 RENDER_DRIVER=browsershot
@@ -107,6 +115,7 @@ Browserless runs in its own container. Inside that container, `localhost` is the
 
 To correct this, do one of these:
 
+- Set `RENDER_ASSET_URL` to an address of the app that Browserless can reach. The MySQL block of the Compose stack sets `http://web:8080`.
 - Use a public domain in `APP_URL`.
 - Use a bucket for `MEDIA_DISK`. Read [Storage](storage.md).
 - For local development, use `RENDER_DRIVER=browsershot`.
@@ -117,7 +126,7 @@ A self-signed certificate on the media URL has the same effect. Chrome in Browse
 
 - A sync render runs in the web request. The request waits until the renderer returns.
 - An async render runs as a `ProcessSnap` job on the `renders` queue. Read [Queues and Horizon](queues-and-horizon.md).
-- The Horizon supervisor has a job timeout of 60 seconds and 1 try.
+- The Horizon supervisor has a job timeout of 60 seconds and 1 try. The `queue:work` worker of the Docker image uses the same values.
 - The Browserless renderer tries a render 3 times. Each attempt waits `BROWSERLESS_TIMEOUT` seconds, and the pause between attempts is 0.2 and then 0.4 seconds.
 
 Tune `BROWSERLESS_TIMEOUT` only. The default of 15 seconds puts the worst case at about 46 seconds, so the third attempt runs before Horizon stops the job at 60 seconds. A sync render in a web request also stays short.

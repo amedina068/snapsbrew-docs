@@ -34,7 +34,7 @@ Add one cron entry for the user that runs the app:
 * * * * * cd /var/www/snapsbrew && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-You can also run `php artisan schedule:work` under a process manager, as the Docker stack does. The app repository has a systemd unit, [`deploy/systemd/snapsbrew-scheduler.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-scheduler.service), and a Supervisor file, [`deploy/supervisor/snapsbrew.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/supervisor/snapsbrew.conf). Use the cron entry or the process manager, not both.
+You can also run `php artisan schedule:work` under a process manager, as the Docker image does. The app repository has a systemd unit, [`deploy/systemd/snapsbrew-scheduler.service`](https://github.com/amedina068/snapsbrew/blob/main/deploy/systemd/snapsbrew-scheduler.service), and a Supervisor file, [`deploy/supervisor/snapsbrew.conf`](https://github.com/amedina068/snapsbrew/blob/main/deploy/supervisor/snapsbrew.conf). Use the cron entry or the process manager, not both.
 
 Use only one scheduler for each instance. "Never two at the same time" uses a cache lock.
 

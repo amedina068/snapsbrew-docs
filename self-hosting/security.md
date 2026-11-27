@@ -13,7 +13,7 @@ This page lists the controls that Snapsbrew has and the settings that you must g
 1. Set `APP_ENV=production` and `APP_DEBUG=false`.
 2. Keep `APP_KEY` secret, and keep a copy in your backups.
 3. Serve the app over HTTPS. Read [Reverse proxy and TLS](reverse-proxy-and-tls.md).
-4. Keep the Browserless port inside a private network.
+4. If you use Browserless, keep its port inside a private network.
 5. Keep `REGISTRATION_ENABLED=false`, unless you want anyone to sign up.
 6. Keep `MCP_REDIRECT_DOMAINS` at the hosts of the connectors that you accept.
 7. Keep `SNAPSBREW_FREE_TOOLS_ENABLED=false`, unless a marketing site needs the free tools.

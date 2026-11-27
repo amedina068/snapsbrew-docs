@@ -12,13 +12,13 @@ Snapsbrew reads its settings from environment variables. Put them in the `.env` 
 - For a server or a local install, start from `.env.example`.
 - For Docker Compose, start from `.env.docker.example`. Every variable of `.env.example` also works there.
 
-After you change `.env` on a server that caches the configuration, run `php artisan config:cache` again. With Docker, restart the containers: `docker compose up -d`.
+After you change `.env` on a server that caches the configuration, run `php artisan config:cache` again. With the one-container install, remove the container with `docker rm -f snapsbrew`, then run the same `docker run` command with the new value. The `/data` volume keeps the data. With Docker Compose, run `docker compose up -d`.
 
 ## How to read the tables
 
 - **Default** is the value that the app uses when the variable is not set. It comes from the files in `config/`.
 - **Example** is the value in `.env.example`. An empty cell means that the variable is not in `.env.example`, or that it is empty there.
-- With Docker, `docker-compose.yml` sets some variables itself. Read [Install with Docker](../getting-started/installation-docker.md).
+- With Docker, the image and `docker-compose.yml` set some variables themselves. Read [Install with Docker](../getting-started/installation-docker.md).
 
 ## App
 
@@ -54,7 +54,7 @@ The app ships no privacy policy and no terms of service. If your instance is pub
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
-| `DB_CONNECTION` | `mysql` | `sqlite` | The database driver. Production uses MySQL 8. |
+| `DB_CONNECTION` | `mysql` | `sqlite` | The database driver: `sqlite` or `mysql`. The Docker image sets `sqlite`. |
 | `DB_HOST` | `127.0.0.1` | commented out | The database host. |
 | `DB_PORT` | `3306` | commented out | The database port. |
 | `DB_DATABASE` | `forge` (`database/database.sqlite` for SQLite) | commented out | The database name, or the SQLite file. |
@@ -69,9 +69,9 @@ The app ships no privacy policy and no terms of service. If your instance is pub
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
-| `CACHE_DRIVER` | `file` | `file` | The cache store. Docker sets `redis`. |
+| `CACHE_DRIVER` | `file` | `file` | The cache store. The Docker image sets `file`. The MySQL block of the Compose stack sets `redis`. |
 | `CACHE_PREFIX` | `<app name>_cache` | commented out | The prefix of the cache keys. |
-| `SESSION_DRIVER` | `file` | `file` | The session store. Docker sets `redis`. |
+| `SESSION_DRIVER` | `file` | `file` | The session store. The Docker image sets `file`. The MySQL block of the Compose stack sets `redis`. |
 | `SESSION_LIFETIME` | `120` | `120` | The session lifetime in minutes. |
 | `SESSION_CONNECTION` | none | | The connection for the `database` or `redis` session driver. |
 | `SESSION_STORE` | none | | The cache store for a cache-based session driver. |
@@ -93,7 +93,7 @@ In the prefixes, `<app name>` is `APP_NAME` in lowercase, with `_` between the w
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
-| `QUEUE_CONNECTION` | `sync` | `sync` | The queue driver. `sync` renders in the request. Use `redis` with Horizon on a server. The Docker image sets `database`. The `mysql` profile of `docker-compose.yml` sets `redis`. |
+| `QUEUE_CONNECTION` | `sync` | `sync` | The queue driver. `sync` renders in the request. On a server, use `database` with `queue:work`, or `redis` with Horizon. The Docker image sets `database`. The `mysql` profile of `docker-compose.yml` sets `redis`. |
 | `REDIS_QUEUE` | `default` | | The default queue name of the `redis` connection. |
 | `QUEUE_FAILED_DRIVER` | `database-uuids` | | Where the failed jobs go. |
 | `HORIZON_PREFIX` | `<app name>_horizon:` | `snapsbrew_horizon:` | The prefix of the Horizon keys in Redis. |
@@ -145,13 +145,14 @@ The variables of each bucket type are in [Storage](storage.md): `AWS_*` for `s3`
 
 | Variable | Default | Example | What it does |
 |---|---|---|---|
-| `RENDER_DRIVER` | `browsershot` | `browsershot` | `browserless` or `browsershot`. Docker sets `browserless`. |
-| `BROWSERLESS_URL` | none | empty | The URL of the Browserless service. Docker sets `http://browserless:3000`. |
-| `BROWSERLESS_TOKEN` | none | empty | The Browserless token. Docker requires it. |
+| `RENDER_DRIVER` | `browsershot` | `browsershot` | `browserless` or `browsershot`. The Docker image sets `browsershot`. The MySQL block of the Compose stack sets `browserless`. |
+| `BROWSERLESS_URL` | none | empty | The URL of the Browserless service. The MySQL block of the Compose stack sets `http://browserless:3000`. |
+| `BROWSERLESS_TOKEN` | none | empty | The Browserless token. The `browserless` service of the Compose stack requires it. |
 | `BROWSERLESS_TIMEOUT` | `15` | `15` | The timeout of one Browserless request, in seconds. The app tries 3 times, and 3 attempts must fit in the Horizon job timeout of 60 seconds. |
 | `BROWSERSHOT_NODE_PATH` | `/usr/local/bin/node` | commented out | The Node binary for Browsershot. |
 | `BROWSERSHOT_NPM_PATH` | `/usr/local/bin/npm` | commented out | The npm binary for Browsershot. |
-| `BROWSERSHOT_INSTANCE` | empty | empty | A remote Chrome as `host:port` for Browsershot. Empty starts a local Chrome. |
+| `RENDER_ASSET_URL` | none | | An address of the app that the renderer can reach, for the images and the fonts of the `public` disk. The Docker image sets `http://127.0.0.1:8080`. Empty keeps the `APP_URL` addresses. |
+| `BROWSERSHOT_INSTANCE` | empty | empty | A remote Chrome as `host:port` for Browsershot. Empty starts a local Chrome. The Docker image sets `http://127.0.0.1:9222`, the Chromium in the container. |
 
 Read [Rendering](rendering.md).
 

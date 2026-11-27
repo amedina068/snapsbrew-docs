@@ -80,7 +80,7 @@ The instance owner can set a company role without a browser. To make a user an o
 php artisan snapsbrew:user:role person@example.com owner
 ```
 
-To make an owner a member, use `member` instead of `owner`. With Docker, add `docker compose exec web` before the command. The command uses the same rules as **Account > Users**.
+To make an owner a member, use `member` instead of `owner`. With the one-container install, add `docker exec snapsbrew` before the command. With Docker Compose, add `docker compose exec web`. The command uses the same rules as **Account > Users**.
 
 With `--json`, stdout holds one JSON object. The exit codes are:
 
@@ -136,7 +136,7 @@ To make an existing user the owner, run:
 php artisan snapsbrew:install --promote=person@example.com
 ```
 
-With Docker, add `docker compose exec web` before the command. The command sets the owner flag and creates no account.
+With the one-container install, add `docker exec snapsbrew` before the command. With Docker Compose, add `docker compose exec web`. The command sets the owner flag and creates no account.
 
 An instance can have more than one owner. `--promote` adds the owner flag to the user. It does not remove the flag from the current owner.
 

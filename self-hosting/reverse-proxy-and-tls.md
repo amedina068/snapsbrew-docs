@@ -131,9 +131,9 @@ APP_PREVIOUS_URLS=https://images.old-host.example
 
 The cache key of a signed URL does not depend on the host. After a move, signed URLs read the images that the instance rendered before the move.
 
-## Browserless and the public URL
+## The renderer and the public URL
 
-Browserless loads the images and the fonts of a template from their URLs. When the media disk is `public`, these URLs start with `APP_URL`. Browserless must reach `APP_URL` from inside its own network. Read [Rendering](rendering.md).
+The renderer loads the images and the fonts of a template from their URLs. When the media disk is `public`, these URLs start with `APP_URL`. The Docker image sets `RENDER_ASSET_URL`, so its Chromium loads them from the web server in the container. Browserless must reach `APP_URL` or `RENDER_ASSET_URL` from inside its own network. Read [Rendering](rendering.md).
 
 ## Session cookies over HTTPS
 

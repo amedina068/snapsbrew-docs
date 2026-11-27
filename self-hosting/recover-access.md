@@ -8,11 +8,13 @@ order: 9
 
 The "forgot password" form sends an email. If your instance has no working mailer, or the owner cannot sign in, use the commands on this page.
 
-With Docker, add `docker compose exec web` before each command. For example:
+With the one-container install, add `docker exec snapsbrew` before each command. For example:
 
 ```bash
-docker compose exec web php artisan snapsbrew:user:list
+docker exec snapsbrew php artisan snapsbrew:user:list
 ```
+
+With Docker Compose, add `docker compose exec web` before each command.
 
 ## Find the user
 

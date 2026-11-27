@@ -18,7 +18,7 @@ This page renders one image in the browser and one image from the REST API. You 
 6. Type new values in the text fields. Each field accepts up to 280 characters.
 7. Start the render.
 
-The browser render is async. If `QUEUE_CONNECTION` is `redis`, Horizon must run. If `QUEUE_CONNECTION` is `sync`, the render runs in the request. Read [Queues and Horizon](../self-hosting/queues-and-horizon.md).
+The browser render is async. The queue worker must run. The Docker container starts it. If `QUEUE_CONNECTION` is `redis`, the worker is Horizon. If `QUEUE_CONNECTION` is `sync`, the render runs in the request. Read [Queues and Horizon](../self-hosting/queues-and-horizon.md).
 
 The finished snap is in the list at `/snapshots`.
 

@@ -42,13 +42,15 @@ docker exec snapsbrew php artisan snapsbrew:setup-url
 
 The `mysql` profile runs, but `.env` does not have the MySQL block of `.env.docker.example`. The app uses SQLite in `/data`. Add the MySQL block to `.env`, then run `docker compose up -d`. Read [MySQL, Redis and Browserless](../getting-started/installation-docker.md#mysql-redis-and-browserless).
 
-### The `web` container is not healthy
+### The container is not healthy
 
-The first start runs all the migrations. The health check waits up to 10 minutes. If the container is still not healthy after that time, read its log:
+The first start runs all the migrations. The health check waits up to 3 minutes. If the container is still not healthy after that time, read its log:
 
 ```bash
-docker compose logs web
+docker logs snapsbrew
 ```
+
+With Docker Compose, run `docker compose logs web`.
 
 ### The setup page returns 404
 
@@ -68,8 +70,8 @@ php artisan snapsbrew:setup-url
 
 The queue worker does not run.
 
-1. If `QUEUE_CONNECTION` is `redis`, make sure that Horizon runs. With Docker, read `docker compose ps`.
-2. If `QUEUE_CONNECTION` is `database`, make sure that `php artisan queue:work` runs. The Docker container starts it.
+1. If `QUEUE_CONNECTION` is `database`, make sure that `php artisan queue:work` runs. The Docker container starts it. This is the default of the Docker image.
+2. If `QUEUE_CONNECTION` is `redis`, make sure that Horizon runs. The container starts Horizon in place of `queue:work`.
 3. If `QUEUE_CONNECTION` is `redis`, make sure that `APP_ENV` is `production` or `local`. With another value, Horizon starts no worker.
 4. Run `php artisan queue:failed` and look for failed jobs.
 
@@ -79,7 +81,7 @@ Read [Queues and Horizon](queues-and-horizon.md).
 
 Read `last_error` of the snap. It holds the error of the renderer.
 
-If the log has "browserless screenshot render failed after 3 attempts":
+If you use Browserless and the log has "browserless screenshot render failed after 3 attempts":
 
 1. Make sure that Browserless runs: `docker compose ps browserless`.
 2. Make sure that `BROWSERLESS_URL` and `BROWSERLESS_TOKEN` are correct.
@@ -93,7 +95,7 @@ If the log has "browserless screenshot render failed after 3 attempts":
 
 The renderer cannot load the image or the font from its URL. This is the most frequent problem with Browserless.
 
-- If `APP_URL` is a `localhost` URL, Browserless cannot reach the files of the `public` disk. Use a public domain, a bucket, or `RENDER_DRIVER=browsershot`.
+- If `APP_URL` is a `localhost` URL, Browserless cannot reach the files of the `public` disk. Set `RENDER_ASSET_URL`, or use a public domain, a bucket, or `RENDER_DRIVER=browsershot`. The Docker image sets `RENDER_ASSET_URL` for its own Chromium.
 - If the media URL uses a self-signed certificate, Chrome does not trust it.
 - If the server blocks outgoing traffic, Chrome cannot reach `fonts.googleapis.com`.
 

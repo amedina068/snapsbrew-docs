@@ -24,18 +24,22 @@ You design a template one time in the browser editor. Then you render it many ti
 
 ## How it works
 
-Snapsbrew is a Laravel 13 app with a Vue 3 editor. The main parts are:
+Snapsbrew is a Laravel 13 app with a Vue 3 editor. It runs in one Docker container with one `/data` volume and a SQLite database. You need no `.env` file, no database server, and no Redis. The server needs 2 GB of memory or more, because Chromium renders the images.
+
+Docker Compose with MySQL, Redis, and Browserless, and an install without Docker, are also available. Read [Install with Docker](installation-docker.md) and [Install without Docker](installation-manual.md).
+
+The main parts are:
 
 | Part | What it does |
 |---|---|
 | Web app | Serves the editor, the dashboard, the REST API, the MCP server and the docs pages of the instance. |
-| Database | MySQL 8 in production. SQLite works for local development. |
+| Database | SQLite in the `/data` volume. The `mysql` profile of the Compose stack uses MySQL 8.4. |
 | Queue worker | Runs the queued jobs: async renders, batches, imports and mail. The Docker image uses the `database` queue and `queue:work`. A Redis install uses Horizon. |
 | Scheduler | Runs the cleanup and the repair commands on a timer. |
-| Renderer | Headless Chrome. Snapsbrew sends the HTML of a snap to Chrome and stores the image that comes back. |
+| Renderer | Headless Chrome. Snapsbrew sends the HTML of a snap to Chrome and stores the image that comes back. The Docker image runs a warm Chromium in the container. |
 | Media storage | Holds the rendered images and the uploads, on the local disk or in an S3-compatible bucket. |
 
-The renderer is [Browserless](https://www.browserless.io/) or Browsershot. Browserless is a pooled Chrome service. Browsershot starts a local Chrome through Node for each render. Read [Rendering](../self-hosting/rendering.md) for the details.
+The renderer is Browsershot or [Browserless](https://www.browserless.io/). The Docker image uses Browsershot with the Chromium of the container. Browserless is a separate Chrome service. The Compose stack with the `mysql` profile uses it. Read [Rendering](../self-hosting/rendering.md) for the details.
 
 ## Words that these docs use
 

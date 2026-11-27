@@ -44,12 +44,12 @@ These installs keep their data in four places. Back up all four.
 
 | What | Where | Why it is important |
 |---|---|---|
-| The database | MySQL (the `mysql` volume of the `mysql` profile in Docker) | Accounts, templates, template versions, snaps, forms, tokens and the usage log. |
+| The database | MySQL (the `mysql` volume of the `mysql` profile in Docker), or the SQLite file (`/data/database.sqlite` in Docker) | Accounts, templates, template versions, snaps, forms, tokens and the usage log. |
 | The storage folder | `storage/` (the `data` volume in Docker, at `/data/storage`) | Rendered images and uploads on the `public` disk, editor assets, uploaded spreadsheets, the Passport keys and the logs. |
 | The `.env` file | The root of the app | All settings. In Docker, `APP_KEY` is in the `data` volume, at `/data/.secrets/app_key`. |
 | The bucket | S3, Spaces or R2 | Rendered images and uploads, if `MEDIA_DISK` is a bucket. |
 
-Redis holds the cache, the sessions and the queued jobs. If you lose Redis, users must sign in again and the queued jobs are lost. A backup of Redis is not necessary for most instances.
+With Redis, Redis holds the cache, the sessions and the queued jobs. If you lose Redis, users must sign in again and the queued jobs are lost. A backup of Redis is not necessary for most instances.
 
 ## Keep `APP_KEY` safe
 
